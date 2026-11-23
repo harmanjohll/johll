@@ -1,5 +1,7 @@
 # Household sheet
 
+**Do not commit this sheet once it is filled in.** The site is published from the root of this repo, so every file here is publicly reachable. Give the answers to Claude in a session instead, or keep a completed copy outside the repo.
+
 Harman completes this. It replaces guessing, and Phase 1 is built from it. Short answers are fine. Use first names only; no identity numbers, addresses or passwords.
 
 ## 1. People

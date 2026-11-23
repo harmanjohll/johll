@@ -1,0 +1,101 @@
+/* Design tokens. One accent, one radius scale, colour used only for people and urgency. */
+
+@font-face { font-family: "Bricolage"; src: url("../fonts/bricolage.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Hanken"; src: url("../fonts/hanken.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/geistmono.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  color-scheme: light;
+  --font-display: "Bricolage", "Hanken", system-ui, sans-serif;
+  --font-body: "Hanken", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --bg: #f2f4f1;
+  --surface: #fbfcfa;
+  --sunk: #e8ebe6;
+  --ink: #17211d;
+  --muted: #55605a;
+  --line: #d6dbd4;
+  --line-strong: #b9c1b8;
+  --accent: #1d5c49;
+  --accent-ink: #f4f7f4;
+  --accent-soft: #dcebe4;
+
+  --amber: #8a5300;
+  --amber-bg: #f8ecd2;
+  --amber-line: #dcb970;
+  --red: #a3241c;
+  --red-bg: #f9e2de;
+  --red-line: #dc9a93;
+  --add: #1c5a33;
+  --add-bg: #dff0e3;
+  --del: #8f231c;
+  --del-bg: #f9e2de;
+
+  --p-wei: #2f62a3;
+  --p-priya: #a23c68;
+  --p-kai: #4f7424;
+  --p-maya: #a9580f;
+  --p-leo: #6d4aa8;
+  --p-rosa: #177a7a;
+  --p-nani: #7a5f2c;
+
+  /* Radius rule: surfaces 12px, controls 8px, chips and buttons are pills. */
+  --r-surface: 12px;
+  --r-control: 8px;
+  --r-pill: 999px;
+
+  --shadow: 0 1px 2px rgb(23 33 29 / 0.06), 0 8px 24px rgb(23 33 29 / 0.06);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --z-nav: 20;
+  --z-overlay: 40;
+  --z-toast: 50;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101513;
+  --surface: #181f1c;
+  --sunk: #0c100f;
+  --ink: #e7ece8;
+  --muted: #9ba7a0;
+  --line: #2a342f;
+  --line-strong: #3d4a44;
+  --accent: #74c7aa;
+  --accent-ink: #0d1512;
+  --accent-soft: #1c332b;
+
+  --amber: #f0bd60;
+  --amber-bg: #33270f;
+  --amber-line: #6b5220;
+  --red: #ff9a8f;
+  --red-bg: #3a1714;
+  --red-line: #7a2f28;
+  --add: #86d6a0;
+  --add-bg: #14301e;
+  --del: #ff9a8f;
+  --del-bg: #3a1714;
+
+  --p-wei: #7fb0ee;
+  --p-priya: #ee8fb6;
+  --p-kai: #a5cf6e;
+  --p-maya: #f0a35c;
+  --p-leo: #b99cf0;
+  --p-rosa: #5fcfcf;
+  --p-nani: #d6b878;
+
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #101513; --surface: #181f1c; --sunk: #0c100f; --ink: #e7ece8; --muted: #9ba7a0;
+    --line: #2a342f; --line-strong: #3d4a44; --accent: #74c7aa; --accent-ink: #0d1512; --accent-soft: #1c332b;
+    --amber: #f0bd60; --amber-bg: #33270f; --amber-line: #6b5220; --red: #ff9a8f; --red-bg: #3a1714; --red-line: #7a2f28;
+    --add: #86d6a0; --add-bg: #14301e; --del: #ff9a8f; --del-bg: #3a1714;
+    --p-wei: #7fb0ee; --p-priya: #ee8fb6; --p-kai: #a5cf6e; --p-maya: #f0a35c; --p-leo: #b99cf0; --p-rosa: #5fcfcf; --p-nani: #d6b878;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}

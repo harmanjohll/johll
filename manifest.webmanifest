@@ -1,0 +1,15 @@
+{
+  "name": "Johll",
+  "short_name": "Johll",
+  "description": "Family portal prototype with sample data",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f4f1",
+  "theme_color": "#1d5c49",
+  "icons": [
+    { "src": "app/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "app/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "app/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

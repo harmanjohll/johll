@@ -91,7 +91,9 @@ export function route(event, members, contracts, sent = new Set()) {
     }
   };
 
+  const exclude = new Set(event.exclude || []);
   for (const member of members) {
+    if (exclude.has(member.id)) continue;
     const d = direct.get(member.id);
     if (d) {
       consider(member, d.tier || event.intent, d.reason, true);

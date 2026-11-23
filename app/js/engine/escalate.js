@@ -17,7 +17,7 @@ export function escalationTimeline({ chain, start, windowMin, acks = {}, repeat 
   const total = chain.length * repeat;
   for (let i = 0; i < total; i += 1) {
     const at = start + i * windowMin;
-    if (ack && ack.at <= at) break;
+    if (ack && ack.at < at) break;
     steps.push({ to: chain[i % chain.length], at, step: i, deadline: at + windowMin });
   }
   if (ack) {

@@ -7,7 +7,7 @@ import { escalationTimeline } from './escalate.js';
 import { propose } from './ripple.js';
 
 export const SCENARIOS = [
-  { id: 'pickup', title: 'A pickup nobody confirms', day: 0, from: hm(12, 45), to: hm(15, 15), blurb: 'Rosa is due to collect Leo at 1:30pm and does not confirm. Watch silence escalate to the next named adult, and stop the moment someone takes it.', rule: 'Silence escalates' },
+  { id: 'pickup', title: 'A pickup nobody confirms', day: 0, from: hm(12, 45), to: hm(19, 15), blurb: 'Rosa is due to collect Leo at 1:30pm and does not confirm. Watch silence escalate to the next named adult, and stop the moment someone takes it.', rule: 'Silence escalates' },
   { id: 'dentist', title: 'The dentist moves', day: 2, from: hm(9), to: hm(20, 15), blurb: "The clinic calls: Leo's appointment must move to Thursday 4pm. One change, and only the people it touches hear about it, each in their own way.", rule: 'Changes are proposals' },
   { id: 'late', title: 'Running late', day: 3, from: hm(17, 45), to: hm(19, 45), blurb: "Wei is driving Kai home from an away match and traffic builds. The estimate changes three times; the people waiting are told once.", rule: 'Notify on change, once' },
 ];
@@ -50,7 +50,7 @@ function pickupScenario(h, input) {
     marks.push({ at: line.ackedAt, label: `${name(who)} takes it` });
     const asked = line.steps.map((s) => s.to).filter((id) => id !== who);
     events.push({
-      id: 'taken', at: line.ackedAt, intent: 'nudge', about: { people: ['leo'] },
+      id: 'taken', at: line.ackedAt, intent: 'nudge', about: { people: ['leo'] }, exclude: [who],
       to: [...asked.map((id) => ({ id, reason: 'You were asked, so you are told it is covered' })), { id: 'leo', reason: 'It is your pickup', tier: 'ambient' }],
       text: (id) => (id === 'leo' ? `${name(who)} is collecting you at 1:30pm.` : `${name(who)} is collecting Leo. Nothing more needed from you.`),
     });

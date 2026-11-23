@@ -157,6 +157,8 @@ test('escalation walks the chain and stops at the first acknowledgement', () => 
   assert.equal(acked.ackedBy, 'b');
   const early = escalationTimeline({ chain: ['a', 'b'], start: 100, windowMin: 8, acks: { a: 95 } });
   assert.equal(early.steps.length, 0);
+  const same = escalationTimeline({ chain: ['a', 'b'], start: 100, windowMin: 8, acks: { b: 108 } });
+  assert.deepEqual(same.steps.map((s) => s.to), ['a', 'b'], 'an answer in the same minute as the ring comes after it');
 });
 
 test('capture: plain language becomes a structured proposal', () => {
@@ -178,6 +180,7 @@ test('scenario: an unconfirmed pickup escalates, and stops when someone takes it
   const taken = runScenario('pickup', h, { acks: { priya: hm(13, 20) } });
   assert.ok(!taken.deliveries.some((d) => d.to === 'wei' && d.channel === 'ring'), 'Wei is never rung');
   assert.ok(taken.deliveries.some((d) => d.to === 'rosa' && d.text.includes('Priya is collecting')));
+  assert.ok(!taken.deliveries.some((d) => d.to === 'priya' && d.text.includes('Priya is collecting')), 'the person who took it is not told that they took it');
   assert.ok(taken.deliveries.some((d) => d.to === 'leo' && d.channel === 'board'));
   assert.ok(taken.deliveries.some((d) => d.to === 'nani' && d.channel === 'digest'), 'Nani follows Leo and hears in her digest');
 });
