@@ -2,14 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#f2f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101513" media="(prefers-color-scheme: dark)">
 <title>Johll</title>
-<style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #faf7f2; color: #2b2a28; font: 18px/1.5 Georgia, serif; }
-</style>
+<meta name="description" content="A prototype of a family portal, running on invented sample data.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="app/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="app/icons/icon-180.png">
+<link rel="preload" href="app/fonts/hanken.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app/css/tokens.css">
+<link rel="stylesheet" href="app/css/phosphor.css">
+<link rel="stylesheet" href="app/css/app.css">
 </head>
 <body>
-<p>Johll family portal. Nothing here yet.</p>
+<div id="app" class="shell">
+  <noscript><p style="padding:24px">This prototype needs JavaScript.</p></noscript>
+</div>
+<script type="module" src="app/js/main.js"></script>
 </body>
 </html>

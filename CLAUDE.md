@@ -4,7 +4,7 @@
 
 Repo: `harmanjohll/johll` (private)
 Owner: Harman Johll
-Status: Phase 0 (contract awaiting approval). No application code exists yet.
+Status: Phase 0 (contract awaiting approval). A clickable prototype with invented data exists; no real backend, sign in or family data yet.
 
 ## 1. Read this file fully before every session
 
@@ -56,6 +56,25 @@ The Science Lab becomes one spoke of the portal.
 * **Spine first, spokes one at a time.** The portal must not become a super app that does everything badly.
 * **Swappable channels.** Notification channels sit behind one layer so that a channel can be added or replaced without redesign.
 * **Honest about limits.** If a fact is unverified or an integration is not possible, say so; do not invent.
+
+### 6.1 The coordination grammar (added 23 November 2026)
+
+Eight rules drawn from tools that coordinate real operations: on call rotas, sports team apps, shift scheduling, hospital handoffs, kitchen displays and delivery dispatch. Every feature should obey them.
+
+1. One named owner, with an end time. Covers are overrides, not edits.
+2. Silence escalates. Every alert that matters has an acknowledgement deadline, then a named next person.
+3. Severity decides the channel. Low urgency goes to the board and never escalates.
+4. Changes are proposals. Swaps need acceptance; an expired proposal means no change.
+5. Handoffs follow a structure and end in a read back.
+6. One ambient board, ageing by colour, answers "what is happening" without a notification.
+7. Notify on change, once. Chase only those who have not answered.
+8. Privacy has graded levels, and every override is visible to the person watched.
+
+Every notification states its reason ("Why: you follow Leo"), so nobody has to guess why they were told.
+
+### 6.2 Patterns the portal must not contain
+
+Streaks, points or badges, presence dots, read receipts for children, and schedulers that hide their reasons.
 
 ## 7. Ethics and protect list
 
@@ -126,6 +145,8 @@ Each phase ends with a gate. Do not start the next phase until Harman signs off 
 
 ### Phase 0: the contract
 Write this file, `docs/research.md` and `docs/household.md`.
+
+A clickable prototype with a fictional household is part of Phase 0, so the contract can be judged by using it. It lives at the repo root (`index.html`, `app/`), runs entirely in the browser, stores nothing, and must never contain real family data, because the site is published publicly. Its coordination logic in `app/js/engine/` is written as pure functions with tests (`npm test`) and is intended to be kept for Phases 1 and 2. Its look is a starting point, set by tokens in `app/css/tokens.css`.
 
 **Gate.** Harman approves the contract and completes the household sheet.
 

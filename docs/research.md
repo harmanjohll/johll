@@ -59,7 +59,33 @@ Consequence: "connects to individual apps" means deep links out, plus email and 
 * **Privacy.** Singapore's data protection law excludes individuals acting in a personal or domestic capacity, so a purely family system is likely outside it; follow its principles regardless. [PDPA](https://sso.agc.gov.sg/Act/PDPA2012?WholeDoc=1)
 * **Open source to learn from.** `werdnum/family-assistant`, [home-os](https://dev.to/htekdev/i-open-sourced-the-ai-that-runs-my-household-57ep), [homeclaw](https://github.com/Jayphen/homeclaw). Activity and quality not verified.
 
-## 7. Unverified: check at source before relying on these
+## 7. Second round: coordination tools (23 November 2026)
+
+Two further strands looked for the single best mechanism in each small group coordination tool. Both worked from search summaries; many product claims come from the vendors' own pages.
+
+**Operations tools outside the office** gave the eight rules now in `CLAUDE.md` 6.1:
+
+* Escalation with an acknowledgement timer, urgency tiers, and rota layers with dated overrides. [incident.io](https://incident.io/blog/escalation-policy-best-practices), [PagerDuty schedules](https://support.pagerduty.com/v1/docs/schedules)
+* Chasing only those who have not answered; carpool and duty assignment. [Spond](https://www.spond.com/en-us/news-and-blog/team-availability-management-app/), [TeamSnap](https://www.teamsnap.com/blog/general-sports/plan-better-with-member-availability)
+* A swap as a proposal needing acceptance, with overload warnings. [Deputy](https://help.deputy.com/hc/en-au/articles/4688726501135), [When I Work](https://help.wheniwork.com/articles/overtime-visibility/?mode=grid)
+* Structured handoffs with read back: I-PASS cut medical errors by 23 percent across 10,740 admissions. [Starmer 2014 via PSNet](https://psnet.ahrq.gov/issue/changes-medical-errors-after-implementation-handoff-program)
+* Tickets that change colour as they age on a shared kitchen screen. [Square](https://squareup.com/help/article/7944)
+* Tell the person waiting once, before they wonder. [Onfleet](https://support.onfleet.com/hc/en-us/articles/360023669392)
+* Schedule change requests that lapse into no change. [OurFamilyWizard](https://www.ourfamilywizard.com/node/12394)
+* Graded location sharing; nearly 1 in 5 children in monitoring app reviews said they felt watched. [MIT Technology Review](https://www.technologyreview.com/2026/08/19/1141623/child-monitoring-apps-need-reboot/)
+
+**Office productivity tools** gave:
+
+* A shared triage queue with a rotating captain: accept, decline with a reason, or snooze. [Linear](https://linear.app/docs/triage)
+* Hill charts, and sizing a project before it starts. [Basecamp](https://basecamp.com/features/hill-charts)
+* Flexible blocks that harden as the day fills. [Reclaim](https://help.reclaim.ai/en/articles/4129290-how-time-defense-settings-work)
+* Planning rituals that warn of overload. [Sunsama](https://help.sunsama.com/docs/daily-shutdown)
+* Propose, review, merge and revert for shared plans. [Ink and Switch, Patchwork](https://www.inkandswitch.com/patchwork/notebook/2024-version-control/)
+* No presence dots, because presence becomes an expectation. [Doist](https://medium.com/ten-timezones/designing-twist-the-challenge-of-making-teamwork-less-stressful-bdd5b440a223)
+
+**A warning from the same research:** Height (September 2025), Clockwise (March 2026) and Ollie (November 2026) all shut down, some deleting user data. The household must own its data and be able to export it.
+
+## 8. Unverified: check at source before relying on these
 
 1. That an existing WhatsApp group cannot be brought under the official interface (rests on a developer forum post).
 2. Official WhatsApp eligibility rules for groups, and all WhatsApp prices for Singapore (sources conflict).
@@ -71,3 +97,4 @@ Consequence: "connects to individual apps" means deep links out, plus email and 
 8. Zazu's claims, which come from its own site and listings.
 9. The Health Buddy closure date.
 10. Home speaker announcements as a nudge channel (an idea, not researched).
+11. The statistics and product behaviours in section 7, most of which come from vendor pages read as search summaries.
