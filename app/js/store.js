@@ -18,6 +18,13 @@ export const state = {
   projects: sample.createProjects(),
   house: sample.createHousekeeping(),
   dinner: sample.createDinner(),
+  log: sample.createLog(),
+  prefs: sample.createPrefs(),
+  routines: [],
+  routinesDeclined: [],
+  later: [],
+  thread: [],
+  homeAll: false,
   tasks: [
     { id: 'task1', title: 'Renew the football season registration', owner: 'H', due: 'Fri', done: false },
     { id: 'task2', title: 'Reply to the playdate invitation', owner: 'K', due: 'Thu', done: false },
@@ -44,7 +51,7 @@ export const household = (overrides = {}) => ({ commitments: state.commitments, 
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 export function emit() { for (const fn of listeners) fn(); }
 
-const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons', 'house', 'dinner'];
+const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons', 'house', 'dinner', 'routines', 'routinesDeclined', 'prefs'];
 const snapshot = () => JSON.stringify(Object.fromEntries(KEEP.map((k) => [k, state[k]])));
 
 // Every change to shared state goes through here, so it is logged and can be undone.

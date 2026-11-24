@@ -4,7 +4,7 @@
 
 Repo: `harmanjohll/johll` (private)
 Owner: Harman Johll
-Status: Phase 0 (contract awaiting approval). A clickable prototype exists with an invented week; the family's names are in it only in encrypted form. No real backend or family schedule yet.
+Status: Phase 0 (contract awaiting approval). A clickable prototype exists with an invented week; the family's names are in it only in encrypted form. No server, no AI key and no real family schedule yet.
 
 ## 1. Read this file fully before every session
 
@@ -55,6 +55,18 @@ The Science Lab becomes one spoke of the portal.
 * The code is never written into this repo: not in code, tests, commit messages or documents.
 * Dinner is part of the portal: who cooks, requests to the cook, what is likely in the house, and receipts that fill the pantry.
 
+### 5.2 Decisions taken on 24 November 2026, later the same day
+
+* The portal is to behave like a household assistant: it knows routines and preferences, adapts, reminds and leads. The interface must teach itself; phone layout first, desktop second; typing and voice.
+* **One surface.** Home is the front door for everyone: one lead sentence, a short stack of cards that are each one decision with a reason, what is next, and a box to tell or ask. Every other screen stays, one tap away, as something Home draws on. No screen is added to the main navigation without removing one.
+* **Three layers, built in this order.**
+  1. Rules (done in the prototype): reminders, clashes, escalation, routing, routines. Needs nothing.
+  2. Always on: acting when the app is closed. Needs a small server (a free Cloudflare account) and proper sign in. No AI key. Real schedules may enter at this point.
+  3. Understanding: free questions, voice notes, school letters, real receipts. Needs an AI key, held on that server and never in the page.
+* Until layer 3, the ask box recognises a fixed set of questions and commands by pattern (`app/js/engine/ask.js`). When it does not understand, it says so, shows what it can do, and offers to leave the message in triage for a person. It must never pretend.
+* Learning is counting and being told, and it is always visible: the "What I know" screen lists every routine and preference held, with its source and a way to remove it.
+* The assistant has no brand name in the app; it speaks as the portal. A name can be chosen later.
+
 ## 6. Principles
 
 * **Code decides, the model words.** Clash detection, routing and scheduling are deterministic code. The language model reads messages and phrases proposals; it never decides a clash and never acts alone.
@@ -64,6 +76,7 @@ The Science Lab becomes one spoke of the portal.
 * **Spine first, spokes one at a time.** The portal must not become a super app that does everything badly.
 * **Swappable channels.** Notification channels sit behind one layer so that a channel can be added or replaced without redesign.
 * **Honest about limits.** If a fact is unverified or an integration is not possible, say so; do not invent.
+* **The app drives.** A person should never have to go looking. What needs them comes to Home as a card, and every card says why it is there. A child's Home is their day in a few plain lines, with nothing to manage.
 
 ### 6.1 The coordination grammar (added 23 November 2026)
 

@@ -178,12 +178,12 @@ export function createHousekeeping() {
 export function createDinner() {
   return {
     dishes: [
-      { id: 'chicken-rice', name: 'Chicken rice', needs: ['chicken', 'rice', 'cucumber', 'ginger', 'garlic'] },
-      { id: 'bolognese', name: 'Pasta bolognese', needs: ['pasta', 'minced beef', 'tinned tomatoes', 'onion', 'garlic'] },
-      { id: 'fried-rice', name: 'Egg fried rice', needs: ['rice', 'eggs', 'spring onion', 'frozen peas'] },
-      { id: 'salmon', name: 'Baked salmon with greens', needs: ['salmon', 'broccoli', 'lemon', 'rice'] },
-      { id: 'tofu', name: 'Tofu and vegetable stir fry', needs: ['tofu', 'broccoli', 'carrot', 'garlic', 'rice'] },
-      { id: 'noodle-soup', name: 'Chicken noodle soup', needs: ['chicken', 'noodles', 'carrot', 'spring onion'] },
+      { id: 'chicken-rice', name: 'Chicken rice', words: ['chicken rice'], needs: ['chicken', 'rice', 'cucumber', 'ginger', 'garlic'] },
+      { id: 'bolognese', name: 'Pasta bolognese', words: ['bolognese', 'pasta', 'spaghetti'], needs: ['pasta', 'minced beef', 'tinned tomatoes', 'onion', 'garlic'] },
+      { id: 'fried-rice', name: 'Egg fried rice', words: ['fried rice'], needs: ['rice', 'eggs', 'spring onion', 'frozen peas'] },
+      { id: 'salmon', name: 'Baked salmon with greens', words: ['salmon', 'fish'], needs: ['salmon', 'broccoli', 'lemon', 'rice'] },
+      { id: 'tofu', name: 'Tofu and vegetable stir fry', words: ['tofu', 'stir fry'], needs: ['tofu', 'broccoli', 'carrot', 'garlic', 'rice'] },
+      { id: 'noodle-soup', name: 'Chicken noodle soup', words: ['noodle soup', 'noodles', 'soup'], needs: ['chicken', 'noodles', 'carrot', 'spring onion'] },
     ],
     plan: [
       { day: 0, cook: COOKS[0], dish: 'bolognese' },
@@ -223,4 +223,28 @@ export function createDinner() {
       },
     ],
   };
+}
+
+// What happened in the four weeks before the sample week, as the portal would have logged it.
+// Used only to notice repeats and offer to make them routines. All invented.
+export function createLog() {
+  const rows = [];
+  const add = (key, title, who, owner, weekday, start, weeks) => { for (const w of weeks) rows.push({ key, title, who, owner, weekday, start, weeksAgo: w }); };
+  add('football', '{A1}, football training', 'A1', 'H', 0, hm(16, 30), [1, 2, 3, 4]);
+  add('piano', '{A2}, piano', 'A2', 'K', 0, hm(16), [1, 2, 3, 4]);
+  add('gym', '{A2}, gymnastics', 'A2', 'K', 1, hm(16), [1, 2, 3]);
+  add('violin', '{A1}, violin', 'A1', 'H', 3, hm(17), [1, 2, 3, 4]);
+  add('netball', '{A2}, netball', 'A2', 'K', 4, hm(15), [1, 3]);
+  add('basketball', '{A1}, basketball', 'A1', 'H', 2, hm(16), [1, 2]);
+  return rows;
+}
+
+// Things the portal has been told. Sample entries, shown on the "What I know" screen.
+export function createPrefs() {
+  return [
+    { id: 'pf1', about: 'K', text: 'No bookings before 9am on Saturdays', source: 'Told by {K}, 2 November' },
+    { id: 'pf2', about: 'A1', text: 'Travels to football and basketball alone, by bus', source: 'Told by {H}, 9 November' },
+    { id: 'pf3', about: 'A2', text: 'Is always collected from school by a parent', source: 'Told by {K}, 2 November' },
+    { id: 'pf4', about: 'H', text: 'Drives at most 8 runs a week for other people', source: 'Set by {H} in the week view' },
+  ];
 }
