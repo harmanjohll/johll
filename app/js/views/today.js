@@ -74,14 +74,7 @@ export default {
         </section>
 
         <aside class="stack">
-          <section class="card stack" aria-label="Needs you">
-            <h2 class="h2">Needs you</h2>
-            ${toConfirm.map((c) => `<div class="between"><span>${esc(c.title)}, <span class="mono">${fmtTime(c.start)}</span></span><button class="btn small primary" data-act="ack" data-id="${c.id}">I have it</button></div>`).join('')}
-            ${tasks.map((t) => `<label class="between" style="cursor:pointer"><span>${esc(t.title)} <span class="meta">by ${esc(t.due)}</span></span><input type="checkbox" data-on="tick" data-id="${t.id}" aria-label="Mark done: ${esc(t.title)}"></label>`).join('')}
-            ${captain && fresh ? `<a class="between" href="#/triage" style="text-decoration:none;color:inherit"><span>You are triage captain: ${plural(fresh, 'item')} waiting</span>${icon('caret-right')}</a>` : ''}
-            ${!attention ? '<p class="meta">Nothing. Others are covering what is theirs.</p>' : ''}
-            ${openNeeds.length ? `<hr class="sep"><p class="meta">Still to pack or sign today: ${openNeeds.map((x) => esc(x.n.label)).join(', ')}.</p>` : ''}
-          </section>
+          <p class="meta">What needs you is on <a href="#/home">Home</a>.</p>
 
           ${showHandoff ? `<section class="card stack handoff" aria-label="Handoff">
             <div class="between"><h2 class="h2">Handoff at 6pm</h2><span class="cluster">${who('K')}${icon('arrow-right')}${who('H')}</span></div>

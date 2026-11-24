@@ -57,7 +57,7 @@ export default {
             <button class="btn small primary" data-act="open" data-id="${t.id}" data-v="accept">Accept</button>
             <button class="btn small" data-act="open" data-id="${t.id}" data-v="decline">Decline</button>
             <button class="btn small" data-act="open" data-id="${t.id}" data-v="snooze">Snooze</button></div>`}
-        </article>`).join('') || `<div class="empty" style="border:0">Nothing waiting. Capture something with the plus button, or press <kbd>/</kbd>.</div>`}
+        </article>`).join('') || `<div class="empty" style="border:0">Nothing waiting. Tell the portal something on Home and it lands here if it needs a person.</div>`}
       </section>
       ${done.length ? `<h2 class="h2">Dealt with</h2><section class="card flush" aria-label="Dealt with">${done.map((t) => `<article class="item done"><div class="between"><b>${esc(t.title)}</b><span class="cluster">${outcome(t)}</span></div></article>`).join('')}</section>` : ''}
       <p class="rule"><b>Borrowed from Linear.</b> A shared intake with a rotating captain. Requests cannot quietly disappear: they are owned, refused with a reason, or parked until a named moment.</p>`;
@@ -65,7 +65,7 @@ export default {
   actions: {
     open: (d) => { open = { id: d.id, mode: d.v }; set({}); },
     cancel: () => { open = null; set({}); },
-    capture: () => document.querySelector('[data-act="palette"]').click(),
+    capture: () => { location.hash = '#/home'; },
     doAccept: (d) => {
       const t = state.triage.find((x) => x.id === d.id);
       const owner = document.getElementById('tri-owner').value;

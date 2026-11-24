@@ -1,0 +1,47 @@
+// What I know: every routine and preference the portal holds, visible to everyone,
+// each with where it came from and a way to remove it.
+
+import { state, commit, nameOf } from '../store.js';
+import { esc, icon, avatar, toast } from '../ui.js';
+import { openOffers, describeRoutine } from '../engine/routines.js';
+import { DAYS } from '../engine/time.js';
+
+export default {
+  render() {
+    const offers = openOffers(state.log, state.routines, state.routinesDeclined);
+    const v = state.viewer;
+    const mineFirst = [...state.prefs].sort((a, b) => Number(b.about === v) - Number(a.about === v));
+    return `
+      <header class="head">
+        <h1 class="h1">What I know</h1>
+        <p class="lede">Everything the portal has learned or been told about the family. Anyone can read it, and anyone can remove what is about them. Nothing is held that is not listed here.</p>
+      </header>
+      <section class="card flush" aria-label="Routines">
+        <div class="item"><h2 class="h2">Routines</h2><p class="meta">Things that repeat, which the portal plans around.</p></div>
+        ${state.routines.map((r) => `<div class="item"><div class="between"><div><b>${esc(describeRoutine(r))}</b><div class="meta">${esc(r.source)}</div></div><button class="btn small quiet" data-act="dropRoutine" data-id="${r.id}">Remove</button></div></div>`).join('') || `<div class="item"><p class="meta">None yet. When something repeats for three weeks, the portal asks whether to make it a routine.</p></div>`}
+      </section>
+      ${offers.length ? `<section class="card flush" aria-label="Noticed">
+        <div class="item"><h2 class="h2">Noticed, not yet a routine</h2><p class="meta">The portal counts repeats. It never decides; it asks the person who owns the activity.</p></div>
+        ${offers.map((r) => `<div class="item"><div class="between"><div><b>${esc(describeRoutine(r))}</b><div class="meta">${r.count} weeks running. ${esc(`{${r.owner}}`)} is asked.</div></div>
+          <span class="cluster"><button class="btn small primary" data-act="yes" data-id="${r.id}">Make it a routine</button><button class="btn small" data-act="no" data-id="${r.id}">No</button></span></div></div>`).join('')}
+      </section>` : ''}
+      <section class="card flush" aria-label="Preferences">
+        <div class="item"><h2 class="h2">Preferences</h2><p class="meta">Things the portal was told. These are sample entries.</p></div>
+        ${mineFirst.map((p) => `<div class="item"><div class="between"><div><span class="who">${avatar(p.about, 'sm')}${esc(nameOf(p.about))}</span><div><b>${esc(p.text)}</b></div><div class="meta">${esc(p.source)}</div></div><button class="btn small quiet" data-act="dropPref" data-id="${p.id}">Remove</button></div></div>`).join('') || `<div class="item"><p class="meta">Nothing held.</p></div>`}
+        <div class="item"><form class="cluster" id="pref-form"><label class="sr" for="pref-text">Tell the portal something to remember</label><input class="input" id="pref-text" style="flex:1;min-width:180px" type="text" maxlength="100" placeholder="Something to remember about you"><button class="btn" type="button" data-act="addPref">${icon('plus')}Remember this</button></form></div>
+      </section>
+      <p class="rule"><b>How it learns for now.</b> By counting what repeats, and by being told. Nothing here is guessed by an AI, and nothing is inferred about a person without showing it on this page.</p>`;
+  },
+  actions: {
+    yes: (d) => { const r = openOffers(state.log, state.routines, state.routinesDeclined).find((x) => x.id === d.id); commit(`Routine: ${r.key}, every ${DAYS[r.weekday]}`, () => { state.routines.push({ ...r, source: `Noticed over ${r.count} weeks, confirmed by {${state.viewer}}` }); }); },
+    no: (d) => commit('Declined a routine offer', () => { state.routinesDeclined.push(d.id); }),
+    dropRoutine: (d) => commit('Removed a routine', () => { state.routines = state.routines.filter((r) => r.id !== d.id); state.routinesDeclined.push(d.id); }),
+    dropPref: (d) => { commit('Removed something the portal knew', () => { state.prefs = state.prefs.filter((p) => p.id !== d.id); }); toast('Removed. It is no longer held.'); },
+    addPref: () => {
+      const input = document.getElementById('pref-text');
+      const text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      commit('Told the portal something to remember', () => { state.prefs.unshift({ id: `pf${Date.now()}`, about: state.viewer, text, source: `Told by {${state.viewer}}, today` }); });
+    },
+  },
+};
