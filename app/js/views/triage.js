@@ -12,7 +12,7 @@ function form(t) {
   if (open.mode === 'accept') {
     return `<div class="stack" style="background:var(--bg);padding:12px;border-radius:var(--r-control)">
       <div class="cols even">
-        <label class="field">Owner<select id="tri-owner">${state.members.filter((m) => m.adult || m.id === 'kai').map((m) => `<option value="${m.id}" ${m.id === state.viewer ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select><span class="help">The owner holds the remembering, not only the doing.</span></label>
+        <label class="field">Owner<select id="tri-owner">${state.members.filter((m) => m.adult || m.id === 'A1').map((m) => `<option value="${m.id}" ${m.id === state.viewer ? 'selected' : ''}>${esc(nameOf(m.id))}</option>`).join('')}</select><span class="help">The owner holds the remembering, not only the doing.</span></label>
         <label class="field">By<select id="tri-due">${DUE.map((x) => `<option>${x}</option>`).join('')}</select></label>
       </div>
       <div class="cluster"><button class="btn primary small" data-act="doAccept" data-id="${t.id}">Accept</button><button class="btn small quiet" data-act="cancel">Cancel</button></div></div>`;

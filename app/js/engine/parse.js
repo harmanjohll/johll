@@ -13,6 +13,8 @@ const TYPE_WORDS = [
   ['activity', ['swim', 'swimming', 'football', 'piano', 'tuition', 'class', 'training', 'match', 'lesson', 'art', 'ballet', 'coding']],
 ];
 
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 function parseClock(h, m, suffix) {
   let hour = Number(h);
   const minute = m ? Number(m) : 0;
@@ -34,11 +36,15 @@ export function parseCapture(text, members, today = 0) {
   const result = { title: '', type: 'activity', day: null, start: null, end: null, people: [], confident: true, notes };
 
   // People, by first name.
+  // A person can be named by any alias: a code, a given name or a pet name.
   for (const m of members) {
-    const re = new RegExp(`\\b${m.name}(?:'s)?\\b`, 'i');
-    if (re.test(rest)) {
-      result.people.push(m.id);
-      rest = rest.replace(re, ' ');
+    const aliases = [...new Set([m.name, ...(m.aliases || [])])].filter(Boolean).sort((a, b) => b.length - a.length);
+    for (const alias of aliases) {
+      const re = new RegExp('\\b' + escapeRe(alias) + "(?:'s)?\\b", 'i');
+      if (re.test(rest)) {
+        if (!result.people.includes(m.id)) result.people.push(m.id);
+        rest = rest.replace(re, ' ');
+      }
     }
   }
 
@@ -92,7 +98,7 @@ export function parseCapture(text, members, today = 0) {
   }
 
   const title = rest.replace(/\s+/g, ' ').replace(/^[\s,]+|[\s,]+$/g, '').replace(/\s+(for|with|at|on|to)$/i, '').replace(/^(for|with)\s+/i, '');
-  const names = result.people.map((id) => members.find((x) => x.id === id).name);
+  const names = result.people.map((id) => `{${id}}`);
   const bare = title ? title.charAt(0).toUpperCase() + title.slice(1) : '';
   result.title = names.length && bare ? `${names.join(' and ')}, ${bare.charAt(0).toLowerCase()}${bare.slice(1)}` : bare || original;
 

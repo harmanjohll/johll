@@ -1,7 +1,7 @@
 // The day simulator: play a scenario and watch what reaches each person, and why.
 
 import { state, set, emit, household, nameOf } from '../store.js';
-import { esc, icon, avatar, hue, CHANNEL, plural } from '../ui.js';
+import { esc, escAs, icon, avatar, hue, CHANNEL, plural } from '../ui.js';
 import { abs, minuteOf, fmtTime, DAYS } from '../engine/time.js';
 import { SCENARIOS, runScenario } from '../engine/simulate.js';
 
@@ -10,7 +10,7 @@ const scenario = () => SCENARIOS.find((s) => s.id === state.sim.id);
 const run = () => runScenario(state.sim.id, household(), state.sim.input);
 
 function contractLine(m) {
-  if (!m.device) return 'No phone. Items show on the kitchen board.';
+  if (!m.device) return 'Limited phone. Items show on the kitchen board.';
   const c = state.contracts[m.id];
   const quiet = `Quiet ${fmtTime(c.quiet[0])} to ${fmtTime(c.quiet[1])}`;
   const digest = c.lower === 'digest' ? `One digest at ${c.digestTimes.map(fmtTime).join(', ')}` : `Digests ${c.digestTimes.map(fmtTime).join(', ')}`;
@@ -23,11 +23,11 @@ function noteHtml(d, r, t) {
   let actions = '';
   if (d.needsAck && r.canAck && r.canAck.includes(d.to)) actions = `<button class="btn small primary" data-act="simAck" data-id="${d.to}">${icon('check')}I have it</button>`;
   if (d.needsAnswer && r.canAnswer && r.canAnswer.includes(d.to)) actions = `<span class="cluster"><button class="btn small primary" data-act="simAnswer" data-v="yes">Accept</button><button class="btn small" data-act="simAnswer" data-v="no">Decline</button></span>`;
-  if (s.id === 'late' && d.to === 'rosa' && r.canHold) actions = `<button class="btn small primary" data-act="simHold">Hold dinner to 7:30pm</button>`;
+  if (s.id === 'late' && d.to === r.cook && r.canHold) actions = `<button class="btn small primary" data-act="simHold">Hold dinner to 7:30pm</button>`;
   return `<div class="note ch-${d.channel}">
     <div class="note-top"><span>${icon(ch.icon)} ${ch.label}</span><span class="mono">${fmtTime(minuteOf(d.at))}</span></div>
-    <div>${esc(d.text)}</div>
-    <div class="why">Why: ${esc(d.reason)}.</div>
+    <div>${escAs(d.text, d.to)}</div>
+    <div class="why">Why: ${escAs(d.reason, d.to)}.</div>
     ${actions}
   </div>`;
 }
@@ -40,8 +40,8 @@ function stage() {
     const mine = shown.filter((d) => d.to === m.id).reverse();
     const reached = mine.some((d) => d.channel === 'ring' || d.channel === 'push');
     const later = r.deliveries.some((d) => d.to === m.id && d.at > t);
-    return `<article class="phone ${reached ? 'lit' : ''} ${m.device ? '' : 'nophone'}" style="${hue(m.id)}" aria-label="${esc(m.name)}">
-      <div class="phone-head">${avatar(m.id)}<div><div class="name">${esc(m.name)} <span class="meta">${esc(m.label)}</span></div><div class="contract">${esc(contractLine(m))}</div></div></div>
+    return `<article class="phone ${reached ? 'lit' : ''} ${m.device ? '' : 'nophone'}" style="${hue(m.id)}" aria-label="${esc(nameOf(m.id))}">
+      <div class="phone-head">${avatar(m.id)}<div><div class="name">${esc(nameOf(m.id))} <span class="meta">${esc(m.label)}</span></div><div class="contract">${esc(contractLine(m))}</div></div></div>
       ${mine.map((d) => noteHtml(d, r, t)).join('') || `<div class="silent">${later ? 'Nothing yet.' : 'Nothing. Not affected, so not told.'}</div>`}
     </article>`;
   }).join('');
@@ -120,7 +120,7 @@ export default {
     simAck: (d) => { stop(); state.sim.input = { ...state.sim.input, acks: { ...(state.sim.input.acks || {}), [d.id]: minuteOf(state.sim.t) } }; emit(); },
     simAnswer: (d) => { stop(); state.sim.input = { ...state.sim.input, answer: { accept: d.v === 'yes', minute: minuteOf(state.sim.t) } }; emit(); },
     simHold: () => { stop(); state.sim.input = { ...state.sim.input, holdDinner: minuteOf(state.sim.t) }; emit(); },
-    simToRipple: () => { set({ draft: { cid: 'dentist', patch: { day: 3, start: 16 * 60, end: 17 * 60 }, choices: { 'art-3': 'nani' } } }); },
+    simToRipple: () => { set({ draft: { cid: 'dentist', patch: { day: 3, start: 17 * 60, end: 18 * 60 }, choices: { 'violin-3': 'H' } } }); },
   },
   inputs: {
     simScrub: (value) => { stop(); const s = scenario(); state.sim.t = abs(s.day, Number(value)); sync(document.getElementById('view')); },

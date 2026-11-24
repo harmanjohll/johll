@@ -2,6 +2,7 @@
 
 import * as sample from './data/sample.js';
 import { abs, hm, fmtAbs } from './engine/time.js';
+import { nameFor } from './names.js';
 
 const listeners = new Set();
 
@@ -16,12 +17,13 @@ export const state = {
   rota: sample.createRota(),
   projects: sample.createProjects(),
   house: sample.createHousekeeping(),
+  dinner: sample.createDinner(),
   tasks: [
-    { id: 'task1', title: 'Reply to the consent form for the away match', owner: 'wei', due: 'Wed', done: false },
-    { id: 'task2', title: "Buy and wrap a gift for Arjun's party", owner: 'priya', due: 'Fri', done: false },
+    { id: 'task1', title: 'Renew the football season registration', owner: 'H', due: 'Fri', done: false },
+    { id: 'task2', title: 'Reply to the playdate invitation', owner: 'K', due: 'Thu', done: false },
   ],
   now: abs(0, hm(12, 40)),
-  viewer: 'priya',
+  viewer: 'H',
   history: [],
   draft: null,
   whatIf: null,
@@ -34,14 +36,15 @@ export const state = {
 };
 
 export const member = (id) => state.members.find((m) => m.id === id);
-export const nameOf = (id) => member(id)?.name || id;
+// The name of a person as the current viewer knows them.
+export const nameOf = (id) => nameFor(id, { viewer: state.viewer });
 export const commitment = (id) => state.commitments.find((c) => c.id === id);
 export const household = (overrides = {}) => ({ commitments: state.commitments, members: state.members, cars: state.cars, contracts: state.contracts, playbooks: state.playbooks, now: state.now, ...overrides });
 
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 export function emit() { for (const fn of listeners) fn(); }
 
-const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons'];
+const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons', 'house', 'dinner'];
 const snapshot = () => JSON.stringify(Object.fromEntries(KEEP.map((k) => [k, state[k]])));
 
 // Every change to shared state goes through here, so it is logged and can be undone.

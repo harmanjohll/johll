@@ -1,7 +1,12 @@
 // Board: the ambient kitchen display. It answers "what is happening" with no notification.
 
 import { state, set, nameOf } from '../store.js';
-import { esc, icon, avatar, toast, plural } from '../ui.js';
+import { escAs, icon, avatar, toast, plural } from '../ui.js';
+import { nameFor } from '../names.js';
+
+// The board is read by everyone, so it uses the names the whole family shares.
+const esc = (s) => escAs(s, null, 'family');
+const fam = (id) => nameFor(id, { context: 'family' });
 import { dayOf, minuteOf, fmtTime, fmtDate, abs } from '../engine/time.js';
 
 function level(c, nowMin) {
@@ -22,7 +27,7 @@ export default {
     const strip = [[count((c) => c.type === 'pickup'), 'pickup'], [count((c) => c.activity), 'class', 'classes'], [count((c) => c.type === 'medical'), 'clinic visit'], [count((c) => c.driver && !c.people.includes(c.driver)), 'driving run']].filter((x) => x[0]);
     const where = state.members.map((m) => {
       const cur = state.commitments.find((c) => c.day === day && c.people.includes(m.id) && c.start <= nowMin && nowMin < c.end && c.status !== 'cancelled');
-      return `<span class="chip">${avatar(m.id, 'sm')}${esc(m.name)}: ${esc(cur ? (cur.type === 'school' ? 'school' : cur.place || cur.title) : 'home')}</span>`;
+      return `<span class="chip">${avatar(m.id, 'sm')}${esc(fam(m.id))}: ${esc(cur ? (cur.type === 'school' ? 'school' : cur.place || cur.title) : 'home')}</span>`;
     }).join('');
     const flags = state.flags || [];
     return `
@@ -41,14 +46,14 @@ export default {
         </div>
         <div class="allday">${strip.map(([n, one, many]) => `<span><b>${n}</b>${n === 1 ? one : many || `${one}s`}</span>`).join('') || '<span>A clear day</span>'}</div>
         <div class="tickets">
-          ${flags.map((f, i) => `<div class="ticket red"><div class="t">${fmtTime(f.at)}</div><div class="n">${esc(nameOf(f.by))} needs a hand</div><div class="meta">Raised on the board. Anyone can take it.</div><div><button class="btn small" data-act="unflag" data-v="${i}">Sorted</button></div></div>`).join('')}
+          ${flags.map((f, i) => `<div class="ticket red"><div class="t">${fmtTime(f.at)}</div><div class="n">${esc(fam(f.by))} needs a hand</div><div class="meta">Raised on the board. Anyone can take it.</div><div><button class="btn small" data-act="unflag" data-v="${i}">Sorted</button></div></div>`).join('')}
           ${todays.map((c) => {
     const lv = level(c, nowMin);
     const undone = c.needs.filter((n) => !n.done).map((n) => n.label);
     return `<div class="ticket ${lv}">
               <div class="between"><span class="t">${fmtTime(c.start)}</span><span class="cluster">${c.people.slice(0, 4).map((p) => avatar(p, 'sm')).join('')}</span></div>
               <div class="n">${esc(c.title)}</div>
-              <div class="meta">${c.driver ? `${esc(nameOf(c.driver))} drives. ` : ''}${c.ack === 'pending' && lv !== 'done' ? `${esc(nameOf(c.owner))} has not confirmed. ` : ''}${undone.length && lv !== 'done' ? `Still to do: ${esc(undone.join(', '))}.` : ''}${lv === 'done' ? 'Done.' : ''}</div>
+              <div class="meta">${c.driver ? `${esc(fam(c.driver))} drives. ` : ''}${c.ack === 'pending' && lv !== 'done' ? `${esc(fam(c.owner))} has not confirmed. ` : ''}${undone.length && lv !== 'done' ? `Still to do: ${esc(undone.join(', '))}.` : ''}${lv === 'done' ? 'Done.' : ''}</div>
             </div>`;
   }).join('')}
         </div>

@@ -10,6 +10,8 @@ export function applyPatches(commitments, patches) {
   return commitments.map((c) => (map.has(c.id) ? { ...c, ...map.get(c.id) } : c));
 }
 
+// "{A2}, dentist" reads better in a sentence as "{A2}'s dentist".
+const inSentence = (title) => title.replace(/^(\{\w+\}), (.+)$/, "$1's $2");
 const when = (c) => `${DAYS_SHORT[c.day]} ${fmtTime(c.start)}`;
 const whenLong = (c) => `${DAYS[c.day]}, ${fmtTime(c.start)} to ${fmtTime(c.end)}`;
 
@@ -26,7 +28,8 @@ export function diffOf(before, after, nameOf) {
 // choices: { [otherCid]: memberId } picks a cover driver for a commitment that now clashes.
 export function propose(household, change) {
   const { commitments, members, cars, playbooks = {}, now = null } = household;
-  const nameOf = (id) => members.find((m) => m.id === id)?.name || id;
+  // People are written as tokens such as {A2}; the name is chosen when the text is shown.
+  const nameOf = (id) => `{${id}}`;
   const before = commitments.find((c) => c.id === change.cid);
   const choices = change.choices || {};
 
@@ -59,7 +62,7 @@ export function propose(household, change) {
     const driverClash = g.clashes.some((k) => (k.kind === 'person' && k.who === o.driver) || k.kind === 'car');
     g.kind = driverClash && o.driver ? 'driver' : o.soft ? 'soft' : 'person';
     if (g.kind === 'driver') {
-      g.options = eligibleDrivers(afterMain, members, cars, o.id);
+      g.options = eligibleDrivers(afterMain, members, cars, o.id, { includeSelf: true });
       const chosen = choices[o.id];
       const pick = g.options.find((x) => x.id === chosen && x.ok);
       if (pick) {
@@ -87,14 +90,15 @@ export function propose(household, change) {
     else { if (!cur.why.includes(why)) cur.why.push(why); cur.needsAnswer = cur.needsAnswer || needsAnswer; }
   };
   for (const p of after.people) touch(p, 'Attending');
-  touch(after.owner, 'Owns this');
+  // One owner per commitment: if someone else proposes the change, the owner must agree.
+  touch(after.owner, 'Owns this', Boolean(change.by) && change.by !== before.owner);
   if (before.driver) touch(before.driver, 'Driving');
   if (after.driver && after.driver !== before.driver) touch(after.driver, 'Asked to drive', true);
   for (const g of groups.values()) {
     const o = g.commitment;
     for (const p of o.people) touch(p, `${o.title} is affected`);
     touch(o.owner, `Owns ${o.title}`);
-    if (g.chosen) touch(g.chosen.id, `Asked to drive for ${o.title}`, true);
+    if (g.chosen) touch(g.chosen.id, g.chosen.self ? `Asked to go by taxi for ${o.title}` : `Asked to cover ${o.title}`, true);
   }
 
   // Follow up tasks from the playbook for this kind of commitment.
@@ -113,9 +117,9 @@ export function propose(household, change) {
   for (const leg of [...legsOf(before), ...legsOf(after)]) if (leg.car) carsTouched.add(leg.car);
   for (const g of groups.values()) for (const k of g.clashes) if (k.kind === 'car') carsTouched.add(k.who);
 
-  const subject = before.title;
+  const subject = inSentence(before.title);
   const changeLine = `${subject} moves from ${when(before)} to ${when(after)}`;
-  const coverLines = [...groups.values()].filter((g) => g.chosen).map((g) => `${nameOf(g.chosen.id)} drives for ${g.commitment.title.toLowerCase().includes(',') ? g.commitment.title : g.commitment.title}`);
+  const coverLines = [...groups.values()].filter((g) => g.chosen).map((g) => (g.chosen.self ? `${nameOf(g.chosen.id)} goes by taxi for ${inSentence(g.commitment.title)}` : `${nameOf(g.chosen.id)} covers ${inSentence(g.commitment.title)}${g.chosen.taxi ? ' by taxi' : ''}`));
   const groupDraft = `${changeLine}. ${coverLines.length ? `${coverLines.join('. ')}. ` : ''}Nothing else changes.`;
 
   return {
