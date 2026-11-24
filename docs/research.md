@@ -97,4 +97,6 @@ Two further strands looked for the single best mechanism in each small group coo
 8. Zazu's claims, which come from its own site and listings.
 9. The Health Buddy closure date.
 10. Home speaker announcements as a nudge channel (an idea, not researched).
-11. The statistics and product behaviours in section 7, most of which come from vendor pages read as search summaries.
+11. The name lock (24 November 2026): four digits on a public site can be tried exhaustively. Revisit as soon as hosting moves behind a proper sign in; until then it guards names only.
+12. Whether saving an unlock key in the browser's key store survives on iPhone when the site is added to the home screen. Not tested on a real device.
+13. The statistics and product behaviours in section 7, most of which come from vendor pages read as search summaries.

@@ -32,7 +32,7 @@ export default {
         <div class="between"><span class="w-day">${DAYS_SHORT[p.day]} <span class="meta mono">${WEEK_START_DATE + p.day}</span></span><span class="badge ${LEVEL[p.level][0]}">${LEVEL[p.level][1]}</span></div>
         <span class="meta">${esc(describePressure(p))}</span></div>`).join('')}`;
 
-    const shared = (c) => c.people.length >= 5;
+    const shared = (c) => c.type === 'meal';
     const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
     const everyone = `<div class="w-name"><span class="who">${icon('users-three')}Everyone</span><span class="meta">Shared time</span></div><div class="w-all">${Array.from({ length: 7 }, (_, day) => `<div>${list.filter((c) => c.day === day && shared(c) && c.status !== 'cancelled').map((c) => {
       const squeezed = clashes.some((k) => k.a === c.id || k.b === c.id);
@@ -48,12 +48,12 @@ export default {
           const clash = hot.has(`${c.id}|${m.id}`) || (run && hotCar.has(c.id));
           const ghost = w && w.cid === c.id;
           return `<button class="blk ${run ? 'run' : ''} ${clash ? 'clash' : ''} ${ghost ? 'ghost' : ''} ${state.weekSel === c.id ? 'sel' : ''}" style="${hue(run ? m.id : (c.people.includes(m.id) ? m.id : c.owner))}" draggable="${c.type !== 'rest'}" data-act="sel" data-id="${c.id}" data-v="${m.id}" aria-label="${esc(`${c.title}, ${DAYS[day]} ${fmtTime(c.start)}${run ? ', driving' : ''}${clash ? ', clashes' : ''}`)}">
-            <b>${run ? `${icon('steering-wheel')} ` : ''}${esc(run ? `Drives ${c.people.map(nameOf).join(', ')}` : cap(c.title.replace(`${m.name}, `, '')))}</b><span class="mono">${fmtTime(c.start)}</span>${clash ? ` ${icon('warning', 'Clash')}` : ''}</button>`;
+            <b>${run ? `${icon('steering-wheel')} ` : ''}${esc(run ? `Drives ${c.people.map(nameOf).join(', ')}` : cap(c.title.replace(`{${m.id}}, `, '')))}</b><span class="mono">${fmtTime(c.start)}</span>${clash ? ` ${icon('warning', 'Clash')}` : ''}</button>`;
         }).join('');
         return `<div class="w-cell ${day === today ? 'today' : ''}" data-day="${day}">${school ? `<div class="meta" style="font-size:11px;margin-bottom:4px">School to ${fmtTime(school.end)}</div>` : ''}${blocks}</div>`;
       }).join('');
       const l = load[m.id];
-      return `<div class="w-name"><span class="who">${avatar(m.id, 'sm')}${esc(m.name)}</span>
+      return `<div class="w-name"><span class="who">${avatar(m.id, 'sm')}${esc(nameOf(m.id))}</span>
         ${m.drives ? `<span class="meta">${l.legs} of ${m.maxLegs} runs</span>${l.over ? `<span class="badge amber">${icon('warning')} Over</span>` : ''}` : `<span class="meta">${esc(m.label)}</span>`}</div>${cells}`;
     }).join('');
 
@@ -64,7 +64,7 @@ export default {
       </header>
       ${w ? `<div class="banner amber" role="status">${icon('eye')}<div><b>What if:</b> ${esc(commitment(w.cid).title)} on ${DAYS[w.patch.day ?? commitment(w.cid).day]}${w.patch.start != null ? ` at ${fmtTime(w.patch.start)}` : ''}. Not saved; nobody has been told.
         <div class="cluster" style="margin-top:8px"><button class="btn small primary" data-act="toRipple">${icon('graph')}Propose it in Ripple</button><button class="btn small" data-act="clearIf">Discard</button></div></div></div>` : ''}
-      ${over.length ? `<div class="banner amber">${icon('warning')}<div><b>${over.map((m) => esc(m.name)).join(' and ')} ${over.length === 1 ? 'is' : 'are'} over the driving limit ${over.length === 1 ? 'they' : 'they each'} set.</b> The Sunday plan does not lock until a run is handed over. <a href="#/rota">Find cover</a></div></div>` : ''}
+      ${over.length ? `<div class="banner amber">${icon('warning')}<div><b>${over.map((m) => esc(nameOf(m.id))).join(' and ')} ${over.length === 1 ? 'is' : 'are'} over the driving limit ${over.length === 1 ? 'they' : 'they each'} set.</b> The Sunday plan does not lock until a run is handed over. <a href="#/rota">Find cover</a></div></div>` : ''}
       <div class="week-wrap" tabindex="0" role="region" aria-label="Week grid, scrolls sideways"><div class="week" id="week-grid">${head}${everyone}${rows}</div></div>
       ${sel ? `<section class="card stack" aria-label="Selected commitment">
         <div class="between"><h2 class="h2">${esc(sel.title)}</h2><span class="mono">${DAYS_SHORT[sel.day]} ${fmtTime(sel.start)} to ${fmtTime(sel.end)}</span></div>
@@ -76,7 +76,7 @@ export default {
       </section>` : `<p class="meta">Tap a block to try moving it. Dashed blocks are driving runs. Nothing is saved until it is proposed and confirmed.</p>`}
       <section class="card stack" aria-label="Driving load">
         <h2 class="h2">Who is carrying the driving</h2>
-        ${state.members.filter((m) => m.drives).map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(m.name)}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].legs * 7)}%"></span></span><span class="mono" style="white-space:nowrap">${load[m.id].legs} of ${m.maxLegs}</span></div>`).join('')}
+        ${state.members.filter((m) => m.drives).map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(nameOf(m.id))}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].legs * 7)}%"></span></span><span class="mono" style="white-space:nowrap">${load[m.id].legs} of ${m.maxLegs}</span></div>`).join('')}
         <p class="rule"><b>Borrowed from shift scheduling.</b> Each driver sets a weekly limit. Going over is allowed, but it is always shown.</p>
       </section>`;
   },

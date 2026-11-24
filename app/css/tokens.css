@@ -32,13 +32,10 @@
   --del: #8f231c;
   --del-bg: #f9e2de;
 
-  --p-wei: #2f62a3;
-  --p-priya: #a23c68;
-  --p-kai: #4f7424;
-  --p-maya: #a9580f;
-  --p-leo: #6d4aa8;
-  --p-rosa: #177a7a;
-  --p-nani: #7a5f2c;
+  --p-H: #2f62a3;
+  --p-K: #a23c68;
+  --p-A1: #40601a;
+  --p-A2: #6d4aa8;
 
   /* Radius rule: surfaces 12px, controls 8px, chips and buttons are pills. */
   --r-surface: 12px;
@@ -77,13 +74,10 @@
   --del: #ff9a8f;
   --del-bg: #3a1714;
 
-  --p-wei: #7fb0ee;
-  --p-priya: #ee8fb6;
-  --p-kai: #a5cf6e;
-  --p-maya: #f0a35c;
-  --p-leo: #b99cf0;
-  --p-rosa: #5fcfcf;
-  --p-nani: #d6b878;
+  --p-H: #7fb0ee;
+  --p-K: #ee8fb6;
+  --p-A1: #a5cf6e;
+  --p-A2: #b99cf0;
 
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
 }
@@ -95,7 +89,7 @@
     --line: #2a342f; --line-strong: #3d4a44; --accent: #74c7aa; --accent-ink: #0d1512; --accent-soft: #1c332b;
     --amber: #f0bd60; --amber-bg: #33270f; --amber-line: #6b5220; --red: #ff9a8f; --red-bg: #3a1714; --red-line: #7a2f28;
     --add: #86d6a0; --add-bg: #14301e; --del: #ff9a8f; --del-bg: #3a1714;
-    --p-wei: #7fb0ee; --p-priya: #ee8fb6; --p-kai: #a5cf6e; --p-maya: #f0a35c; --p-leo: #b99cf0; --p-rosa: #5fcfcf; --p-nani: #d6b878;
+    --p-H: #7fb0ee; --p-K: #ee8fb6; --p-A1: #a5cf6e; --p-A2: #b99cf0;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
   }
 }

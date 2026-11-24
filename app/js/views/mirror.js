@@ -13,7 +13,7 @@ function hill(projects) {
   return `<svg class="hill" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hill chart. ${projects.map((p) => `${p.title}: ${p.pos < 0.5 ? 'still being figured out' : 'being done'}`).join('. ')}." style="max-width:560px">
     <path d="${path}"/><line x1="${W / 2}" y1="34" x2="${W / 2}" y2="${base}" stroke="var(--line)" stroke-dasharray="3 4"/>
     <text x="${W * 0.25}" y="${H - 8}" text-anchor="middle">Figuring it out</text><text x="${W * 0.75}" y="${H - 8}" text-anchor="middle">Getting it done</text>
-    ${projects.map((p, i) => { const x = 20 + p.pos * (W - 40); return `<circle cx="${x}" cy="${y(p.pos)}" r="9" fill="var(--p-${state.members.find((m) => m.id === p.owner).hue})" stroke="var(--surface)" stroke-width="2"/><text x="${x}" y="${y(p.pos) + 4}" text-anchor="middle" style="fill:var(--surface);font-size:10px">${i + 1}</text>`; }).join('')}
+    ${projects.map((p, i) => { const x = 20 + p.pos * (W - 40); return `<circle cx="${x}" cy="${y(p.pos)}" r="9" fill="var(--p-${p.owner})" stroke="var(--surface)" stroke-width="2"/><text x="${x}" y="${y(p.pos) + 4}" text-anchor="middle" style="fill:var(--surface);font-size:10px">${i + 1}</text>`; }).join('')}
   </svg>`;
 }
 
@@ -35,13 +35,13 @@ export default {
       <div class="cols even">
         <section class="card stack" aria-label="Driving">
           <h2 class="h2">Driving</h2>
-          <p>${esc(top.name)} drives ${load[top.id].legs} of the week's ${total} runs for other people.${load[top.id].over ? ` ${esc(top.name)}'s own limit is ${top.maxLegs}.` : ''}</p>
-          ${drivers.map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(m.name)}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].legs * 7)}%"></span></span><span class="mono">${load[m.id].legs}</span></div>`).join('')}
+          <p>${esc(nameOf(top.id))} drives ${load[top.id].legs} of the week's ${total} runs for other people.${load[top.id].over ? ` The limit ${esc(nameOf(top.id))} set is ${top.maxLegs}.` : ''}</p>
+          ${drivers.map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(nameOf(m.id))}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].legs * 7)}%"></span></span><span class="mono">${load[m.id].legs}</span></div>`).join('')}
         </section>
         <section class="card stack" aria-label="Who holds what">
           <h2 class="h2">Who holds the remembering</h2>
-          <p>Owning something means noticing it, planning it and seeing it done. This week ${esc(owners[0].name)} owns ${load[owners[0].id].owned} commitments${owners[1] ? `, and ${esc(owners[1].name)} owns ${load[owners[1].id].owned}` : ''}.</p>
-          ${owners.map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(m.name)}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].owned * 7)}%"></span></span><span class="mono">${load[m.id].owned}</span></div>`).join('')}
+          <p>Owning something means noticing it, planning it and seeing it done. This week ${esc(nameOf(owners[0].id))} owns ${load[owners[0].id].owned} commitments${owners[1] ? `, and ${esc(nameOf(owners[1].id))} owns ${load[owners[1].id].owned}` : ''}.</p>
+          ${owners.map((m) => `<div class="between" style="flex-wrap:nowrap"><span class="who" style="min-width:84px">${avatar(m.id, 'sm')}${esc(nameOf(m.id))}</span><span style="flex:1;min-width:0"><span class="bar" style="${hue(m.id)};width:${Math.min(100, load[m.id].owned * 7)}%"></span></span><span class="mono">${load[m.id].owned}</span></div>`).join('')}
         </section>
       </div>
       <div class="cols even">
@@ -50,10 +50,10 @@ export default {
           <div class="cluster" style="gap:28px">
             <div class="stat"><span class="n">5</span><span class="meta">family dinners planned</span></div>
             <div class="stat"><span class="n">1</span><span class="meta">dinner with someone away</span></div>
-            <div class="stat"><span class="n">2</span><span class="meta">one to one times planned</span></div>
+            <div class="stat"><span class="n">1</span><span class="meta">one to one time planned</span></div>
           </div>
-          <p>Wei and Maya have had no time planned for just the two of them in three weeks. Priya and Kai: Saturday's match counts if Priya goes.</p>
-          <p class="meta">Stated, not scored. Nobody is reminded of this unless they ask for it.</p>
+          <p>${esc("Planned for two: {H} and {A1}, Saturday's match. Nothing is planned yet this week for {K} and {A1}, or for {H} and {A2}.")}</p>
+          <p class="meta">Sample figures. Stated, not scored. Nobody is reminded of this unless they ask for it.</p>
         </section>
         <section class="card stack" aria-label="Unfinished">
           <h2 class="h2">Unfinished</h2>

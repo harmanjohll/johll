@@ -37,7 +37,7 @@ export default {
         </section>
         <section class="card stack" aria-label="Groceries">
           <h2 class="h2">Groceries</h2>
-          <p class="meta">Anyone adds; Rosa and Priya shop on Saturday at noon.</p>
+          <p class="meta">Anyone adds. The weekly shop is Saturday at noon. <a href="#/dinner">Dinner</a> adds what a dish is missing.</p>
           ${state.house.groceries.map((g) => `<div class="between"><span>${esc(g.item)}</span><span class="meta">${esc(nameOf(g.by))}</span></div>`).join('')}
           <form class="cluster" data-form="grocery"><label class="sr" for="g-item">Add an item</label><input class="input" id="g-item" style="flex:1;min-width:140px" type="text" placeholder="Add an item" maxlength="60"><button class="btn" data-act="addItem" type="button">${icon('plus')}Add</button></form>
         </section>
@@ -52,8 +52,7 @@ export default {
       const input = document.getElementById('g-item');
       const item = input.value.trim();
       if (!item) { input.focus(); return; }
-      state.house.groceries.push({ item, by: state.viewer });
-      commit(`Groceries: added ${item}`, () => {});
+      commit(`Groceries: added ${item}`, () => { state.house.groceries.push({ item, by: state.viewer }); });
       toast('Added to the list.');
     },
   },

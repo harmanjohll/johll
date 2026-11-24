@@ -15,12 +15,12 @@ function preview(v) {
     ['A change to something of yours, at 10am', { at: abs(day, hm(10)), intent: 'nudge', to: [{ id: v, reason: 'Yours' }] }],
     ['The same change at 11pm', { at: abs(day, hm(23)), intent: 'nudge', to: [{ id: v, reason: 'Yours' }] }],
     ['A pickup you own that nobody has confirmed, at 11pm', { at: abs(day, hm(23)), intent: 'interrupt', needsAck: true, to: [{ id: v, reason: 'Yours' }] }],
-    ['Something about Leo that you are not part of, at 2pm', { at: abs(day, hm(14)), intent: 'nudge', about: { people: ['leo'] }, to: [] }],
+    [v === 'A2' ? 'Something about {A1} that you are not part of, at 2pm' : 'Something about {A2} that you are not part of, at 2pm', { at: abs(day, hm(14)), intent: 'nudge', about: { people: [v === 'A2' ? 'A1' : 'A2'] }, to: [] }],
   ];
   return cases.map(([label, e], i) => {
     const d = route({ id: `p${i}`, text: '', about: {}, ...e }, state.members, state.contracts).deliveries.find((x) => x.to === v);
     const ch = d && CHANNEL[d.channel];
-    return `<div class="between"><span>${label}</span><span class="badge ${d && (d.channel === 'push' || d.channel === 'ring') ? 'accent' : 'calm'}">${d ? `${icon(ch.icon)} ${ch.label}${d.channel === 'digest' ? `, ${fmtTime(minuteOf(d.at))}` : ''}` : 'Not told'}</span></div>`;
+    return `<div class="between"><span>${esc(label)}</span><span class="badge ${d && (d.channel === 'push' || d.channel === 'ring') ? 'accent' : 'calm'}">${d ? `${icon(ch.icon)} ${ch.label}${d.channel === 'digest' ? `, ${fmtTime(minuteOf(d.at))}` : ''}` : 'Not told'}</span></div>`;
   }).join('');
 }
 
@@ -29,14 +29,14 @@ export default {
     const v = state.viewer;
     const m = member(v);
     const c = state.contracts[v];
-    const targets = [...state.members.filter((x) => x.id !== v).map((x) => ({ key: x.id, label: x.name, av: avatar(x.id, 'sm') })), ...state.activities.map((a) => ({ key: `activity:${a.id}`, label: a.name, av: icon('books') }))];
+    const targets = [...state.members.filter((x) => x.id !== v).map((x) => ({ key: x.id, label: nameOf(x.id), av: avatar(x.id, 'sm') })), ...state.activities.map((a) => ({ key: `activity:${a.id}`, label: a.name, av: icon('books') }))];
     const tierOf = (key) => c.follows.find((f) => f.target === key)?.tier || 'none';
     return `
       <header class="head">
         <h1 class="h1">My notifications</h1>
-        <p class="lede">${esc(m.name)}'s rules. Whoever sends something says how urgent it is; these rules decide how, and whether, it reaches ${m.device ? 'this phone' : 'the board'}.</p>
+        <p class="lede">Rules for ${esc(nameOf(v))}. Whoever sends something says how urgent it is; these rules decide how, and whether, it reaches ${m.device ? 'this phone' : 'the board'}.</p>
       </header>
-      ${m.device ? '' : `<div class="banner">${icon('monitor')}<div>${esc(m.name)} has no phone, so everything shows on the kitchen board. An adult sets what appears there.</div></div>`}
+      ${m.device ? '' : `<div class="banner">${icon('monitor')}<div>${esc(nameOf(v))} has limited phone access, so everything shows on the kitchen board and nothing is pushed. A parent sets what appears there.</div></div>`}
       <div class="cols even">
         <div class="stack">
           <section class="card stack" aria-label="The four tiers">

@@ -42,7 +42,7 @@ function followedName(contract, about, members) {
     if (f.target.startsWith('activity:')) {
       if (about.activity === f.target.slice(9)) return about.activityName || f.target.slice(9);
     } else if ((about.people || []).includes(f.target)) {
-      return members.find((m) => m.id === f.target)?.name || f.target;
+      return `{${f.target}}`;
     }
   }
   return '';

@@ -1,7 +1,7 @@
 // Ripple: change one commitment and see everything it touches, as a proposal to confirm.
 
 import { state, set, commit, household, nameOf, commitment, member } from '../store.js';
-import { esc, icon, avatar, who, toast, CHANNEL, plural } from '../ui.js';
+import { esc, escAs, say, letter, icon, avatar, who, toast, CHANNEL, plural } from '../ui.js';
 import { fmtTime, DAYS, DAYS_SHORT, minuteOf, dayOf } from '../engine/time.js';
 import { propose, openSlots } from '../engine/ripple.js';
 import { route } from '../engine/route.js';
@@ -12,9 +12,10 @@ const movable = () => state.commitments.filter((c) => !['school', 'rest'].includ
 
 function graph(p) {
   const W = 360;
+  const title = say(p.before.title);
   const core = { x: W / 2, y: 34 };
   const people = p.affected.slice(0, 5);
-  const things = [...p.groups.map((g) => ({ label: g.commitment.title, sub: g.summary, hot: !g.chosen && g.clashes.some((k) => k.severity === 'hard'), soft: g.kind === 'soft' })),
+  const things = [...p.groups.map((g) => ({ label: say(g.commitment.title), sub: g.summary, hot: !g.chosen && g.clashes.some((k) => k.severity === 'hard'), soft: g.kind === 'soft' })),
     ...p.carsTouched.map((id) => ({ label: state.cars.find((c) => c.id === id).name, sub: 'Shared car', hot: p.remaining.some((k) => k.kind === 'car' && k.who === id) }))];
   const px = (i, n) => (n === 1 ? W / 2 : 36 + (i * (W - 72)) / (n - 1));
   const peopleY = 128;
@@ -29,17 +30,17 @@ function graph(p) {
     const x = things.length === 1 ? W / 2 : 70 + (i * (W - 140)) / (things.length - 1);
     out += `<path class="edge ${t.hot ? 'hot' : ''}" d="M${core.x} ${core.y + 20} C ${core.x + (x < core.x ? -150 : 150)} ${peopleY}, ${x} ${thingY - 70}, ${x} ${thingY - 20}"/>`;
   });
-  out += `<rect class="node core" x="${core.x - 110}" y="${core.y - 20}" width="220" height="40" rx="10"/><text x="${core.x}" y="${core.y - 1}" text-anchor="middle">${esc(wrap(p.before.title, 30))}</text><text class="sub" x="${core.x}" y="${core.y + 13}" text-anchor="middle">${DAYS_SHORT[p.before.day]} ${fmtTime(p.before.start)} to ${DAYS_SHORT[p.after.day]} ${fmtTime(p.after.start)}</text>`;
+  out += `<rect class="node core" x="${core.x - 110}" y="${core.y - 20}" width="220" height="40" rx="10"/><text x="${core.x}" y="${core.y - 1}" text-anchor="middle">${esc(wrap(title, 30))}</text><text class="sub" x="${core.x}" y="${core.y + 13}" text-anchor="middle">${DAYS_SHORT[p.before.day]} ${fmtTime(p.before.start)} to ${DAYS_SHORT[p.after.day]} ${fmtTime(p.after.start)}</text>`;
   people.forEach((a, i) => {
     const x = px(i, people.length);
     const m = member(a.id);
-    out += `<circle cx="${x}" cy="${peopleY}" r="17" fill="var(--surface)" stroke="var(--p-${m.hue})" stroke-width="2"/><text x="${x}" y="${peopleY + 4}" text-anchor="middle" style="fill:var(--p-${m.hue})">${esc(m.name[0])}</text><text x="${x}" y="${peopleY + 33}" text-anchor="middle">${esc(m.name)}</text><text class="sub" x="${x}" y="${peopleY + 46}" text-anchor="middle">${a.needsAnswer ? 'is asked' : a.why[0] === 'Attending' ? 'attending' : a.why[0] === 'Owns this' ? 'owns this' : a.why[0] === 'Driving' ? 'drives' : 'affected'}</text>`;
+    out += `<circle cx="${x}" cy="${peopleY}" r="17" fill="var(--surface)" stroke="var(--p-${m.hue})" stroke-width="2"/><text x="${x}" y="${peopleY + 4}" text-anchor="middle" style="fill:var(--p-${m.hue})">${esc(letter(m.id))}</text><text x="${x}" y="${peopleY + 33}" text-anchor="middle">${esc(nameOf(m.id))}</text><text class="sub" x="${x}" y="${peopleY + 46}" text-anchor="middle">${a.needsAnswer ? 'is asked' : a.why[0] === 'Attending' ? 'attending' : a.why[0] === 'Owns this' ? 'owns this' : a.why[0] === 'Driving' ? 'drives' : 'affected'}</text>`;
   });
   things.forEach((t, i) => {
     const x = things.length === 1 ? W / 2 : 70 + (i * (W - 140)) / (things.length - 1);
     out += `<rect class="node ${t.hot ? 'hot' : ''}" x="${x - 66}" y="${thingY - 20}" width="132" height="40" rx="10"/><text x="${x}" y="${thingY - 2}" text-anchor="middle">${esc(wrap(t.label, 19))}</text><text class="sub" x="${x}" y="${thingY + 12}" text-anchor="middle">${t.hot ? 'clashes' : t.soft ? 'squeezed' : 'touched'}</text>`;
   });
-  const desc = `${p.before.title} touches ${people.map((a) => nameOf(a.id)).join(', ')}${things.length ? `, and ${things.map((t) => t.label).join(', ')}` : ''}.`;
+  const desc = `${title} touches ${people.map((a) => nameOf(a.id)).join(', ')}${things.length ? `, and ${things.map((t) => t.label).join(', ')}` : ''}.`;
   return `<svg class="graph" viewBox="0 0 ${W} ${things.length ? 262 : 190}" role="img" aria-label="${esc(desc)}" style="max-width:560px;margin:0 auto">${out}</svg>`;
 }
 
@@ -53,10 +54,10 @@ function toldList(p) {
   const asked = new Set(p.affected.filter((a) => a.needsAnswer).map((a) => a.id));
   return state.members.filter((m) => m.id !== by).map((m) => {
     const d = deliveries.find((x) => x.to === m.id);
-    if (asked.has(m.id)) return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(m.name)}</b> <span class="meta">is asked first; nothing changes until there is an answer</span></span><span class="badge accent">${icon('bell')} Asked</span></div>`;
-    if (!d) return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(m.name)}</b> <span class="meta">not affected</span></span><span class="badge calm">Not told</span></div>`;
+    if (asked.has(m.id)) return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(nameOf(m.id))}</b> <span class="meta">is asked first; nothing changes until there is an answer</span></span><span class="badge accent">${icon('bell')} Asked</span></div>`;
+    if (!d) return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(nameOf(m.id))}</b> <span class="meta">not affected</span></span><span class="badge calm">Not told</span></div>`;
     const ch = CHANNEL[d.channel];
-    return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(m.name)}</b> <span class="meta">${esc(d.reason)}</span></span><span class="badge ${d.channel === 'push' ? 'accent' : 'calm'}">${icon(ch.icon)} ${ch.label}${d.channel === 'digest' ? `, ${fmtTime(minuteOf(d.at))}` : ''}</span></div>`;
+    return `<div class="told">${avatar(m.id, 'sm')}<span><b>${esc(nameOf(m.id))}</b> <span class="meta">${esc(d.reason)}</span></span><span class="badge ${d.channel === 'push' ? 'accent' : 'calm'}">${icon(ch.icon)} ${ch.label}${d.channel === 'digest' ? `, ${fmtTime(minuteOf(d.at))}` : ''}</span></div>`;
   }).join('');
 }
 
@@ -84,7 +85,7 @@ export default {
           <select data-on="time">${Array.from({ length: 27 }, (_, i) => 7 * 60 + i * 30).map((t) => `<option value="${t}" ${t === target.start ? 'selected' : ''}>${fmtTime(t)}${slots.includes(t) ? '' : ', clashes'}</option>`).join('')}${(target.start - 420) % 30 ? `<option value="${target.start}" selected>${fmtTime(target.start)}</option>` : ''}</select>
           <span class="help">Open on ${DAYS[target.day]} with no clash: ${slots.length ? `<span class="slots" style="display:inline-flex;vertical-align:middle">${slots.filter((t) => t >= 14 * 60).slice(0, 6).map((t) => `<button class="chip mono" data-act="slot" data-v="${t}" aria-pressed="${t === target.start}">${fmtTime(t)}</button>`).join('') || 'mornings only'}</span>` : 'none'}</span>
         </label>
-        ${changed ? '' : `<div class="banner">${icon('graph')}<div>Pick a new day or time to see what the change touches. <button class="btn small" data-act="preset" style="margin-top:8px">Try: dentist to Thursday 4pm</button></div></div>`}
+        ${changed ? '' : `<div class="banner">${icon('graph')}<div>Pick a new day or time to see what the change touches. <button class="btn small" data-act="preset" style="margin-top:8px">Try: dentist to Thursday 5pm</button></div></div>`}
       </section>`;
 
     if (!p) {
@@ -98,7 +99,7 @@ export default {
           <legend class="h3" style="padding:0;margin-bottom:8px">${esc(o.title)}, ${DAYS_SHORT[o.day]} ${fmtTime(o.start)}: ${esc(g.summary)}</legend>
           ${g.options.map((opt) => `<label class="opt ${opt.ok ? '' : 'off'}">
             <input type="radio" name="cover-${o.id}" data-on="cover" data-id="${o.id}" value="${opt.id}" ${opt.ok ? '' : 'disabled'} ${d.choices[o.id] === opt.id ? 'checked' : ''}>
-            <span><span class="who">${avatar(opt.id, 'sm')}${esc(nameOf(opt.id))} drives instead</span>
+            <span><span class="who">${avatar(opt.id, 'sm')}${esc(nameOf(opt.id))} ${opt.self ? 'keeps the run, by taxi' : opt.taxi ? 'covers it, by taxi' : 'drives instead'}</span>
               <span class="meta" style="display:block">${esc(opt.reason)}.</span>
               ${opt.overload ? `<span class="badge amber" style="margin-top:4px">${icon('warning')} Over the limit they set</span>` : ''}</span>
           </label>`).join('')}
@@ -139,9 +140,9 @@ export default {
           ${p.tasks.length ? `<section class="card stack" aria-label="Follow ups"><h2 class="h2">Follow ups it creates</h2>${p.tasks.map((t) => `<div class="between"><span>${esc(t.title)}</span>${who(t.owner)}</div>`).join('')}</section>` : ''}
           <section class="card stack" aria-label="Message for the family group">
             <h2 class="h2">For the family WhatsApp group</h2>
-            <div class="draft" id="group-draft">${esc(p.groupDraft)}</div>
-            <div class="cluster"><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(p.groupDraft)}">${icon('whatsapp-logo')}Share to WhatsApp</a><button class="btn quiet" data-act="copy">${icon('copy')}Copy</button></div>
-            <p class="meta">A person posts this with one tap. The portal never posts into the group by itself.</p>
+            <div class="draft" id="group-draft">${escAs(p.groupDraft, null, 'family')}</div>
+            <div class="cluster"><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(say(p.groupDraft, null, 'family'))}">${icon('whatsapp-logo')}Share to WhatsApp</a><button class="btn quiet" data-act="copy">${icon('copy')}Copy</button></div>
+            <p class="meta">Written with the names the whole family uses. A person posts it with one tap; the portal never posts into the group by itself.</p>
           </section>
         </div>
       </div>`;
@@ -149,7 +150,7 @@ export default {
   actions: {
     day: (d) => { const cur = draft(); set({ draft: { ...cur, sent: false, choices: {}, patch: { ...cur.patch, day: Number(d.v) } } }); },
     slot: (d) => { const cur = draft(); set({ draft: { ...cur, sent: false, choices: {}, patch: { ...cur.patch, start: Number(d.v) } } }); },
-    preset: () => set({ draft: { cid: 'dentist', patch: { day: 3, start: 16 * 60 }, choices: {} } }),
+    preset: () => set({ draft: { cid: 'dentist', patch: { day: 3, start: 17 * 60 }, choices: {} } }),
     discard: () => { set({ draft: null }); toast('Discarded. Nothing changed.'); },
     copy: () => { const text = document.getElementById('group-draft').textContent; navigator.clipboard?.writeText(text).then(() => toast('Copied.'), () => toast('Copy is not available here.')); },
     send: () => {
@@ -176,7 +177,7 @@ export default {
 };
 
 function apply(p) {
-  commit(p.changeLine, () => {
+  commit(say(p.changeLine, null, 'family'), () => {
     state.commitments = p.afterAll.map((c) => ({ ...c }));
     for (const t of p.tasks.filter((x) => !x.carried)) state.tasks.push({ id: `task${Date.now()}${state.tasks.length}`, title: t.title, owner: t.owner, due: DAYS_SHORT[Math.max(dayOf(state.now), p.after.day - 1)], done: false });
     state.draft = null;

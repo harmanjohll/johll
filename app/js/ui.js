@@ -1,15 +1,29 @@
 // Small rendering helpers shared by every screen.
 
-import { member, nameOf } from './store.js';
+import { state, member, nameOf } from './store.js';
+import { tx, nameFor, isUnlocked } from './names.js';
 
-export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const raw = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+// Text is made safe, and any person token such as {A2} becomes the viewer's name for them.
+export const esc = (s) => raw(tx(s, { viewer: state.viewer }));
+// The same, as a named person would read it, or in the shared family or formal register.
+export const escAs = (s, viewer, context = 'personal') => raw(tx(s, { viewer, context }));
+export const say = (s, viewer = state.viewer, context = 'personal') => tx(s, { viewer, context });
 export const icon = (name, label = '') => `<i class="ph ph-${name}" ${label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"'}></i>`;
 export const hue = (id) => `--c:var(--p-${member(id)?.hue || id})`;
 
 export function avatar(id, size = '') {
   const m = member(id);
   if (!m) return '';
-  return `<span class="avatar ${size}" style="${hue(id)}" title="${esc(m.name)}">${esc(m.name[0])}</span>`;
+  return `<span class="avatar ${size} ${isUnlocked() ? '' : 'code'}" style="${hue(id)}" title="${esc(nameOf(id))}">${esc(letter(id))}</span>`;
+}
+
+// One letter, or two when two people share an initial. A code when the device is locked.
+export function letter(id) {
+  if (!isUnlocked()) return id;
+  const formal = nameFor(id, { context: 'formal' });
+  const clash = state.members.some((m) => m.id !== id && nameFor(m.id, { context: 'formal' })[0] === formal[0]);
+  return clash ? formal.slice(0, 2) : formal[0];
 }
 
 export const who = (id, extra = '') => `<span class="who">${avatar(id, 'sm')}${esc(nameOf(id))}${extra}</span>`;

@@ -4,7 +4,7 @@
 
 Repo: `harmanjohll/johll` (private)
 Owner: Harman Johll
-Status: Phase 0 (contract awaiting approval). A clickable prototype with invented data exists; no real backend, sign in or family data yet.
+Status: Phase 0 (contract awaiting approval). A clickable prototype exists with an invented week; the family's names are in it only in encrypted form. No real backend or family schedule yet.
 
 ## 1. Read this file fully before every session
 
@@ -46,6 +46,14 @@ The Science Lab becomes one spoke of the portal.
 * Phones in the family are mixed, iPhone and Android.
 * All eight core ideas are in scope, sequenced by phase (section 9).
 * Google Calendar remains where event times live. The portal's database holds what Google cannot model.
+
+### 5.1 Decisions taken on 24 November 2026
+
+* The household is four people, known in this repo only by the codes `H`, `K`, `A1` and `A2`. One car; both parents drive. `A2` is 8 with limited phone access: nothing is pushed to her, and her items show on the board.
+* Names depend on who is looking and on context. One function, `nameFor` in `app/js/names.js`, chooses between three registers: personal (what the viewer calls that person), family (what everyone uses; the board and the WhatsApp group draft), and formal (the given name; anything sent outside the family). Text that mentions a person carries a token such as `{A2}`, never a name.
+* Real names and pet names live only in `app/js/data/names.enc.json`, encrypted. A four digit family code unlocks them on a device, where they stay unlocked until that device is locked.
+* The code is never written into this repo: not in code, tests, commit messages or documents.
+* Dinner is part of the portal: who cooks, requests to the cook, what is likely in the house, and receipts that fill the pantry.
 
 ## 6. Principles
 
@@ -90,6 +98,7 @@ Streaks, points or badges, presence dots, read receipts for children, and schedu
 * Secrets live in the hosting platform's secret store or repository secrets, never in the repo and never in chat.
 * Plain exports (calendar files, spreadsheets) must always work, so the data outlives the system.
 * Every change to a commitment is written to an audit log.
+* **The name lock is a diary lock, not a safe.** The site is public, so the encrypted names file is public, and a four digit code has only 10,000 possibilities. It keeps names from search engines and casual visitors; it would not stop someone determined. It therefore guards names and pet names only. Real schedules, venues, school details or anything about health must not enter the repo until the portal sits behind a proper sign in (Phase 1).
 
 ### 7.3 Distress
 If anything a family member writes suggests distress, the system does not diagnose. It responds once, briefly, suggests speaking to a trusted adult, and does not escalate to others without that person knowing.
@@ -146,7 +155,7 @@ Each phase ends with a gate. Do not start the next phase until Harman signs off 
 ### Phase 0: the contract
 Write this file, `docs/research.md` and `docs/household.md`.
 
-A clickable prototype with a fictional household is part of Phase 0, so the contract can be judged by using it. It lives at the repo root (`index.html`, `app/`), runs entirely in the browser, stores nothing, and must never contain real family data, because the site is published publicly. Its coordination logic in `app/js/engine/` is written as pure functions with tests (`npm test`) and is intended to be kept for Phases 1 and 2. Its look is a starting point, set by tokens in `app/css/tokens.css`.
+A clickable prototype is part of Phase 0, so the contract can be judged by using it. It lives at the repo root (`index.html`, `app/`) and runs entirely in the browser. Because the site is published publicly, every time, venue and event in it is invented, and the only real family data it holds is the encrypted names file described in 5.1 and 7.2. Its coordination logic in `app/js/engine/` is written as pure functions with tests (`npm test`) and is intended to be kept for Phases 1 and 2. Its look is a starting point, set by tokens in `app/css/tokens.css`.
 
 **Gate.** Harman approves the contract and completes the household sheet.
 
@@ -171,6 +180,7 @@ A clickable prototype with a fictional household is part of Phase 0, so the cont
 * Universal capture: typed text, a photo or screenshot, a voice note, a forwarded email. The model extracts; the person confirms.
 * Activities as seasons.
 * Groceries, chores, and maintenance with need based recurrence; document and expiry tracking; household memory.
+* Dinner and pantry for real: reading forwarded FairPrice and RedMart order emails and photos of paper receipts with the model, confirmed by a person before the pantry changes. The pantry always says "likely", because a receipt shows what came in and never what was eaten.
 
 **Gate.** A Parents Gateway screenshot and a forwarded booking email each become a correct, confirmed commitment. At this gate, raise the parked second brain idea (section 11) with Harman.
 
@@ -215,5 +225,5 @@ A clickable prototype with a fictional household is part of Phase 0, so the cont
 * The completed household sheet.
 * Access to the blocked documentation sites from the build environment, so the unverified facts in `docs/research.md` can be checked at source.
 
-*Last updated: 23 November 2026*
+*Last updated: 24 November 2026*
 *Author: Harman Johll, with Claude (Anthropic)*

@@ -1,6 +1,6 @@
 // Shell: navigation, routing, the viewer switch, and the command palette.
 
-import { state, subscribe, set, commit, member, nameOf, household } from './store.js';
+import { state, subscribe, set, emit, commit, member, nameOf, household } from './store.js';
 import { esc, icon, avatar, toast, hue } from './ui.js';
 import { fmtTime, fmtAbs, DAYS, hm, abs } from './engine/time.js';
 import { parseCapture } from './engine/parse.js';
@@ -17,6 +17,9 @@ import notifications from './views/notifications.js';
 import seasons from './views/seasons.js';
 import mirror from './views/mirror.js';
 import history from './views/history.js';
+import dinner from './views/dinner.js';
+import namesView from './views/names.js';
+import * as names from './names.js';
 
 const ROUTES = [
   { id: 'today', label: 'Today', icon: 'house', view: today, group: 'Now', tab: true },
@@ -25,11 +28,13 @@ const ROUTES = [
   { id: 'week', label: 'Week', icon: 'calendar-blank', view: week, group: 'Plan', tab: true },
   { id: 'ripple', label: 'Ripple', icon: 'graph', view: ripple, group: 'Plan' },
   { id: 'rota', label: 'Rota and swaps', icon: 'arrows-left-right', view: rota, group: 'Plan' },
+  { id: 'dinner', label: 'Dinner', icon: 'fork-knife', view: dinner, group: 'Plan', tab: true },
   { id: 'seasons', label: 'Seasons', icon: 'books', view: seasons, group: 'Plan' },
-  { id: 'triage', label: 'Triage', icon: 'tray', view: triage, group: 'Inbox', tab: true },
+  { id: 'triage', label: 'Triage', icon: 'tray', view: triage, group: 'Inbox' },
   { id: 'notifications', label: 'My notifications', icon: 'bell', view: notifications, group: 'Inbox' },
   { id: 'mirror', label: 'Mirror', icon: 'chart-bar', view: mirror, group: 'Look back' },
   { id: 'history', label: 'History', icon: 'clock-counter-clockwise', view: history, group: 'Look back' },
+  { id: 'names', label: 'Names', icon: 'identification-badge', view: namesView, group: 'This device' },
 ];
 
 const app = document.getElementById('app');
@@ -45,7 +50,7 @@ function shell() {
     <nav class="side" aria-label="Sections">
       <a class="brand" href="#/today">Johll</a>
       ${groups.map((g) => `<div class="group">${g}</div>${ROUTES.filter((r) => r.group === g).map((r) => `<a class="nav" href="#/${r.id}" data-nav="${r.id}">${icon(r.icon)}${r.label}</a>`).join('')}`).join('')}
-      <div class="foot">A prototype. Every name and event here is invented.</div>
+      <div class="foot">A prototype. Every time, place and event here is invented.</div>
     </nav>
     <div>
       <header class="topbar">
@@ -53,6 +58,7 @@ function shell() {
         <span class="sample">Sample data</span>
         <span class="spacer"></span>
         <button class="btn icon quiet" data-act="palette" aria-label="Capture or search" title="Capture or search (press /)">${icon('plus')}</button>
+        <button class="btn icon quiet" data-act="lockSheet" id="lock-btn" aria-label="Sign in"></button>
         <button class="btn icon quiet" data-act="theme" aria-label="Switch light and dark" title="Switch light and dark">${icon('circle-half')}</button>
         <button class="viewer" data-act="viewerSheet" aria-haspopup="dialog" id="viewer-btn"></button>
       </header>
@@ -81,7 +87,11 @@ function paint() {
     if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   }
   const v = member(state.viewer);
-  document.getElementById('viewer-btn').innerHTML = `${avatar(v.id)}<span class="who">${esc(v.name)}</span><span class="sr">Viewing as ${esc(v.name)}. Change person</span>`;
+  document.getElementById('viewer-btn').innerHTML = `${avatar(v.id)}<span class="who">${esc(nameOf(v.id))}</span><span class="sr">Viewing as ${esc(nameOf(v.id))}. Change person</span>`;
+  const lockBtn = document.getElementById('lock-btn');
+  lockBtn.innerHTML = icon(names.isUnlocked() ? 'lock-open' : 'lock');
+  lockBtn.setAttribute('aria-label', names.isUnlocked() ? 'Names are unlocked on this device' : 'Sign in to show names');
+  lockBtn.title = lockBtn.getAttribute('aria-label');
   if (changed) { window.scrollTo(0, 0); }
   else if (fk) {
     const [act, fid, fv] = fk.split('|');
@@ -114,7 +124,7 @@ function overlayKeys(e) {
 function viewerSheet() {
   openOverlay(`<div class="sheet" role="dialog" aria-label="View as">
     <div class="meta" style="padding:8px 12px">View the portal as</div>
-    ${state.members.map((m) => `<button data-act="setViewer" data-id="${m.id}" ${m.id === state.viewer ? 'aria-current="true"' : ''}>${avatar(m.id)}<span><b>${esc(m.name)}</b> <span class="meta">${esc(m.label)}${m.device ? '' : ', no phone'}</span></span></button>`).join('')}
+    ${state.members.map((m) => `<button data-act="setViewer" data-id="${m.id}" ${m.id === state.viewer ? 'aria-current="true"' : ''}>${avatar(m.id)}<span><b>${esc(nameOf(m.id))}</b> <span class="meta">${esc(m.label)}${m.device ? '' : ', limited phone'}</span></span></button>`).join('')}
   </div>`, (el) => el.querySelector('[aria-current="true"]')?.focus());
 }
 
@@ -128,8 +138,9 @@ function commands() {
   return [
     ...ROUTES.map((r) => ({ label: `Go to ${r.label}`, icon: r.icon, run: () => go(r.id) })),
     ...SCENARIOS.map((s) => ({ label: `Play: ${s.title}`, icon: 'play', run: () => { set({ sim: { id: s.id, t: abs(s.day, s.from), input: {}, playing: false } }); go('simulator'); } })),
-    { label: "Move Leo's dentist to Thursday 4pm", icon: 'graph', run: () => { set({ draft: { cid: 'dentist', patch: { day: 3, start: hm(16), end: hm(17) }, choices: {} } }); go('ripple'); } },
-    ...state.members.map((m) => ({ label: `View as ${m.name}`, icon: 'user', run: () => set({ viewer: m.id }) })),
+    { label: 'Move the dentist to Thursday 5pm', icon: 'graph', run: () => { set({ draft: { cid: 'dentist', patch: { day: 3, start: hm(17), end: hm(18) }, choices: {} } }); go('ripple'); } },
+    ...state.members.map((m) => ({ label: `View as ${nameOf(m.id)}`, icon: 'user', run: () => set({ viewer: m.id }) })),
+    { label: names.isUnlocked() ? 'Lock this device' : 'Sign in to show names', icon: names.isUnlocked() ? 'lock' : 'lock-open', run: lockSheet },
     { label: 'Switch light and dark', icon: 'circle-half', run: toggleTheme },
     { label: 'Open the board full screen', icon: 'arrows-out', run: () => go('board') },
   ];
@@ -141,7 +152,7 @@ function palette() {
   let parsed = null;
   const day = Math.floor(state.now / 1440);
   openOverlay(`<div class="palette" role="dialog" aria-label="Capture or search">
-    <input type="text" placeholder="Try: Swim Tue 5pm Leo" aria-label="Type something to capture, or a command" autocomplete="off" spellcheck="false">
+    <input type="text" placeholder="Try: Netball Fri 3pm ${esc(nameOf('A2'))}" aria-label="Type something to capture, or a command" autocomplete="off" spellcheck="false">
     <div class="parsed" hidden></div>
     <div class="results" role="listbox"></div>
     <div class="hint">Type what happened in plain words and it becomes a proposal to confirm. Or type a command. <kbd>Enter</kbd> to choose, <kbd>Esc</kbd> to close.</div>
@@ -151,7 +162,7 @@ function palette() {
     const box = el.querySelector('.parsed');
     const draw = () => {
       const q = input.value.trim();
-      parsed = q.length > 3 ? parseCapture(q, state.members, day) : null;
+      parsed = q.length > 3 ? parseCapture(q, state.members.map((m) => ({ ...m, aliases: names.aliasesOf(m.id) })), day) : null;
       const useful = parsed && (parsed.day != null || parsed.start != null);
       const cmds = commands().filter((c) => !q || c.label.toLowerCase().includes(q.toLowerCase()));
       list = [];
@@ -208,6 +219,53 @@ function addCapture(parsed, raw) {
   }
 }
 
+// Sign in: the family's code unlocks names on this device and keeps them unlocked.
+let failures = 0;
+function lockSheet() {
+  if (names.isUnlocked()) {
+    openOverlay(`<div class="sheet" role="dialog" aria-label="Names on this device">
+      <div class="meta" style="padding:8px 12px">Names are unlocked on this device and stay unlocked until you lock it.</div>
+      <a href="#/names" data-act="closeOverlay">${icon('identification-badge')}Who calls whom what</a>
+      <button data-act="lockNow">${icon('lock')}Lock this device</button>
+    </div>`, (el) => el.querySelector('a')?.focus());
+    return;
+  }
+  if (!names.cryptoAvailable()) { toast('Sign in needs a secure page (https).'); return; }
+  openOverlay(`<form class="pin" role="dialog" aria-label="Sign in">
+    <h2 class="h2">Sign in</h2>
+    <p class="meta">Enter the family code to show names on this device. Until then the portal shows H, K, A1 and A2.</p>
+    <label class="sr" for="pin-input">Family code, four digits</label>
+    <input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-describedby="pin-err">
+    <div class="err" id="pin-err" role="alert"></div>
+    <button class="btn primary" type="submit">Unlock</button>
+  </form>`, (el) => {
+    const form = el.querySelector('form');
+    const input = el.querySelector('input');
+    const err = el.querySelector('.err');
+    const button = el.querySelector('button');
+    input.focus();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (input.value.length !== 4 || button.disabled) return;
+      button.disabled = true;
+      button.textContent = 'Checking';
+      try {
+        await names.unlock(input.value);
+        failures = 0;
+        closeOverlay();
+        emit();
+        toast('Unlocked on this device.');
+      } catch (ex) {
+        failures += 1;
+        const wait = Math.min(30, failures * 2);
+        err.textContent = `That code does not match. Try again in ${wait} seconds.`;
+        input.value = '';
+        setTimeout(() => { if (!overlay) return; button.disabled = false; button.textContent = 'Unlock'; err.textContent = ''; input.focus(); }, wait * 1000);
+      }
+    });
+  });
+}
+
 function toggleTheme() {
   const root = document.documentElement;
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -221,6 +279,8 @@ const globalActions = {
   moreSheet: (d, el, e) => { e.preventDefault(); moreSheet(); },
   closeOverlay,
   setViewer: (d) => { closeOverlay(); set({ viewer: d.id }); toast(`Viewing as ${nameOf(d.id)}.`); },
+  lockSheet,
+  lockNow: async () => { await names.lock(); closeOverlay(); emit(); toast('Locked. This device shows codes again.'); },
   go: (d) => go(d.id),
 };
 
@@ -245,5 +305,7 @@ document.addEventListener('keydown', (e) => {
 
 shell();
 subscribe(paint);
+// If this device was unlocked before, show names again without asking.
+names.resume().then((ok) => { if (ok) paint(); });
 window.addEventListener('hashchange', () => { closeOverlay(); paint(); });
 paint();

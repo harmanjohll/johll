@@ -210,7 +210,7 @@ hr.sep { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .order .turn { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
 
 /* Board */
-.board { background: #0c100f; color: #e7ece8; border-radius: var(--r-surface); padding: 20px; display: grid; gap: 16px; --line: #2a342f; --muted: #9ba7a0; --surface: #181f1c; --ink: #e7ece8; --amber: #f0bd60; --amber-bg: #33270f; --amber-line: #6b5220; --red: #ff9a8f; --red-bg: #3a1714; --red-line: #7a2f28; --accent: #74c7aa; --accent-soft: #1c332b; --accent-ink: #0d1512; --line-strong: #3d4a44; --sunk: #0c100f; --bg: #101513; --p-wei: #7fb0ee; --p-priya: #ee8fb6; --p-kai: #a5cf6e; --p-maya: #f0a35c; --p-leo: #b99cf0; --p-rosa: #5fcfcf; --p-nani: #d6b878; }
+.board { background: #0c100f; color: #e7ece8; border-radius: var(--r-surface); padding: 20px; display: grid; gap: 16px; --line: #2a342f; --muted: #9ba7a0; --surface: #181f1c; --ink: #e7ece8; --amber: #f0bd60; --amber-bg: #33270f; --amber-line: #6b5220; --red: #ff9a8f; --red-bg: #3a1714; --red-line: #7a2f28; --accent: #74c7aa; --accent-soft: #1c332b; --accent-ink: #0d1512; --line-strong: #3d4a44; --sunk: #0c100f; --bg: #101513; --p-H: #7fb0ee; --p-K: #ee8fb6; --p-A1: #a5cf6e; --p-A2: #b99cf0; }
 .board:fullscreen { border-radius: 0; padding: 4vh 4vw; overflow: auto; }
 .board-clock { font: 600 clamp(44px, 9vw, 96px)/1 var(--font-mono); letter-spacing: -0.03em; }
 .board-date { font: 600 clamp(18px, 2.4vw, 26px)/1.2 var(--font-display); color: var(--muted); }
@@ -261,3 +261,15 @@ label.between input[type="checkbox"] { width: 20px; height: 20px; accent-color: 
 .w-all > div { padding: 8px; border-left: 1px solid var(--line); }
 
 @media (max-width: 420px) { .seg button { padding: 6px 8px; } }
+
+/* Sign in pad and the avatar when it shows a code */
+.avatar.code { font-size: 10px; letter-spacing: -0.02em; }
+.avatar.sm.code { font-size: 8.5px; }
+.pin { width: min(360px, 100%); background: var(--surface); border-radius: 16px; border: 1px solid var(--line-strong); padding: 20px; display: grid; gap: 12px; }
+.pin input { font: 600 28px/1 var(--font-mono); letter-spacing: 0.5em; text-align: center; padding: 12px 0 12px 0.5em; border: 1px solid var(--line-strong); border-radius: var(--r-control); background: var(--bg); width: 100%; }
+.pin .err { color: var(--red); font-size: 14px; min-height: 20px; }
+.lvl { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+.lvl.likely { background: var(--accent); }
+.lvl.maybe { background: var(--amber); }
+
+@media (max-width: 480px) { .topbar [data-act="theme"] { display: none; } }
