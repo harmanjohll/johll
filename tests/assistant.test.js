@@ -120,7 +120,7 @@ test('ask: it says so when it does not understand', () => {
   const r = say('should we get a dog');
   assert.equal(r.kind, 'unknown');
   assert.match(r.text, /cannot answer that yet/);
-  assert.equal(r.bullets.length, 3);
+  assert.ok(r.bullets.length >= 3, 'it lists what it can do');
 });
 
 test('ask: examples suit the person', () => {

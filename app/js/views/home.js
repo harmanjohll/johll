@@ -1,7 +1,7 @@
 // Home: the one surface. A lead sentence, a short stack of decisions, what is next,
 // and a box to tell or ask. Everything else in the portal is something this draws on.
 
-import { state, set, emit, commit, member, nameOf } from '../store.js';
+import { state, set, emit, commit, restore, member, nameOf } from '../store.js';
 import { esc, icon, avatar, toast, plural } from '../ui.js';
 import { dayOf, minuteOf, fmtTime, fmtDate, abs, DAYS } from '../engine/time.js';
 import { brief, childDay } from '../engine/brief.js';
@@ -10,10 +10,15 @@ import { openOffers } from '../engine/routines.js';
 import { findClashes } from '../engine/clash.js';
 import { aliasesOf } from '../names.js';
 import today from './today.js';
+import { planStop } from './adventures.js';
+import { downloadWeek } from './connections.js';
+import { startWatch, arrive } from '../engine/checkin.js';
+import { decide } from '../engine/policy.js';
+import { checkDish } from '../engine/pantry.js';
 import rota from './rota.js';
 import dinner from './dinner.js';
 
-const KIND_ICON = { confirm: 'hand-waving', request: 'arrows-left-right', clash: 'warning', need: 'backpack', handoff: 'list-checks', dinner: 'fork-knife', task: 'check', load: 'steering-wheel', triage: 'tray', routine: 'repeat' };
+const KIND_ICON = { confirm: 'hand-waving', request: 'arrows-left-right', clash: 'warning', need: 'backpack', handoff: 'list-checks', dinner: 'fork-knife', task: 'check', load: 'steering-wheel', triage: 'tray', routine: 'repeat', checkin: 'timer', watch: 'bell', expiry: 'hourglass', adventure: 'compass' };
 const SHOWN = 4;
 const Speech = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
 let listening = null;
@@ -36,7 +41,8 @@ function run(text) {
   const v = state.viewer;
   const r = ask(text, state, v, people());
   say('me', { text });
-  const reply = { text: r.text, bullets: r.bullets };
+  const reply = { text: r.text, bullets: r.bullets, note: r.note };
+  let after = null;
   let navigate = null;
   let changed = null;
   if (r.kind === 'proposal') reply.proposal = { parsed: r.parsed, status: 'open' };
@@ -50,11 +56,39 @@ function run(text) {
     else if (d.type === 'setDish') changed = [`Dinner on ${DAYS[d.day]} chosen`, () => { state.dinner.plan.find((p) => p.day === d.day).dish = d.dish; }];
     else if (d.type === 'openRipple') { state.draft = { cid: d.cid, patch: d.patch, choices: {} }; navigate = 'ripple'; }
     else if (d.type === 'go') navigate = d.route;
+    else if (d.type === 'watch') changed = ['Set a reminder that cancels itself', () => { state.watches.push(startWatch({ by: v, cid: d.cid, at: d.at, now: state.now })); }];
+    else if (d.type === 'arrive') changed = [`${nameOf(v)} arrived`, () => { state.checkins = state.checkins.map((c) => (c.id === d.id ? arrive(c, state.now) : c)); }];
+    else if (d.type === 'ics') after = () => downloadWeek(v);
   }
   say('it', reply);
   focusAsk = !navigate;
   if (changed) commit(changed[0], changed[1]); else emit();
   if (navigate) location.hash = `#/${navigate}`;
+  if (after) after();
+}
+
+const bump = (action) => { const a = state.automations.find((x) => x.action === action); if (a) a.accepted += 1; };
+
+// "Act, then tell": when the family has let an automation act alone, it does the thing
+// and leaves a note saying what it did, with an undo. Only the grocery list can reach this level.
+function autoRun() {
+  const v = state.viewer;
+  const au = state.automations.find((a) => a.action === 'list');
+  if (!au || decide(au.action, au.level) !== 'act') return;
+  const day = dayOf(state.now);
+  const tonight = state.dinner.plan.find((p) => p.day === day);
+  if (!tonight || tonight.cook !== v || !tonight.dish) return;
+  const key = `list-${day}-${tonight.dish}`;
+  if ((state.autoSkipped || []).includes(key)) return;
+  const dish = state.dinner.dishes.find((d) => d.id === tonight.dish);
+  const r = checkDish(dish, state.dinner.pantry, day);
+  const have = new Set(state.house.groceries.map((g) => g.item.toLowerCase()));
+  const add = [...r.missing, ...r.unsure].filter((n) => !have.has(n));
+  if (!add.length) return;
+  const id = `told${Date.now()}`;
+  state.told = [...state.told, { id, key, to: v, text: `added ${add.join(', ')} to the grocery list for tonight's ${dish.name.toLowerCase()}`, why: 'You let this one act, then tell. You can change that under What I know', historyId: null }];
+  commit(`Added automatically: ${add.join(', ')} for ${dish.name.toLowerCase()}`, () => { for (const n of add) state.house.groceries.push({ item: n, by: 'dinner' }); });
+  state.told.find((t) => t.id === id).historyId = state.history[0].id;
 }
 
 function cardHtml(c) {
@@ -82,7 +116,7 @@ function threadHtml() {
         ${t.proposal.status === 'open' ? `<div class="cluster"><button class="btn primary small" data-act="propYes" data-id="${i}">Add to the week</button><button class="btn small" data-act="propNo" data-id="${i}">Cancel</button></div>` : `<p class="meta">${t.proposal.status === 'added' ? `${icon('check')} Added.` : 'Cancelled. Nothing was added.'}</p>`}`;
     }
     if (t.unknown) extra += t.sent ? `<p class="meta">${icon('check')} Left in triage for a person.</p>` : `<div><button class="btn small" data-act="toTriage" data-id="${i}">${icon('tray')}Leave it in triage for a person</button></div>`;
-    return `<div class="bubble it">${t.text ? `<p>${esc(t.text)}</p>` : ''}${t.bullets ? `<ul>${t.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}${extra}</div>`;
+    return `<div class="bubble it">${t.text ? `<p>${esc(t.text)}</p>` : ''}${t.bullets ? `<ul>${t.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}${t.note ? `<p class="why">${esc(t.note)}</p>` : ''}${extra}</div>`;
   }).join('');
 }
 
@@ -142,6 +176,7 @@ export default {
       </header>
       <div class="home">
         <section class="stack" aria-label="What needs you">
+          ${state.told.filter((t) => t.to === v).map((t) => `<article class="jcard told" aria-label="Done for you"><div class="jcard-icon">${icon('robot')}</div><div class="jcard-body"><h2 class="jcard-title">Done for you: ${esc(t.text)}</h2><p class="why">Why: ${esc(t.why)}.</p><div class="cluster"><button class="btn" data-act="card" data-id="${t.id}" data-v="toldOk">Fine</button><button class="btn" data-act="card" data-id="${t.id}" data-v="toldUndo">Undo</button></div></div></article>`).join('')}
           ${shown.map(cardHtml).join('') || `<div class="empty">Nothing needs you. The others are covering what is theirs.</div>`}
           ${hidden > 0 ? `<button class="btn quiet" data-act="showAll">Show ${plural(hidden, 'more', 'more')}</button>` : state.homeAll && b.cards.length > SHOWN ? `<button class="btn quiet" data-act="showAll">Show fewer</button>` : ''}
         </section>
@@ -155,6 +190,7 @@ export default {
       </div>`;
   },
   mount(root) {
+    autoRun();
     const form = root.querySelector('#ask-form');
     if (!form) return;
     const input = root.querySelector('#ask-input');
@@ -174,17 +210,27 @@ export default {
       if (act === 'ack') return today.actions.ack({ id: d.id });
       if (act === 'need') return today.actions.need({ id: d.id, v: extra });
       if (act === 'swapYes' || act === 'swapNo') return rota.actions[act]({ id: d.id });
+      if (act === 'addMissing') bump('list');
       if (act === 'reqYes' || act === 'reqNo' || act === 'addMissing') return dinner.actions[act]({ id: d.id });
       if (act === 'tick') { const t = state.tasks.find((x) => x.id === d.id); return commit(`Done: ${t.title}`, () => { t.done = true; }); }
       if (act === 'later') return set({ later: [...state.later, d.id] });
       if (act === 'ripple') { set({ draft: { cid: d.id, patch: {}, choices: {} } }); location.hash = '#/ripple'; return null; }
       if (act === 'go') { location.hash = `#/${d.id}`; return null; }
       if (act === 'routineYes') {
+        bump('routine');
         const r = openOffers(state.log, state.routines, state.routinesDeclined).find((x) => x.id === d.id);
         commit(`Routine: ${r.key}, every ${DAYS[r.weekday]}`, () => { state.routines.push({ ...r, source: `Noticed over ${r.count} weeks, confirmed by {${state.viewer}}` }); });
         return toast('It is a routine now. You can see it under What I know.');
       }
       if (act === 'routineNo') return commit('Declined a routine offer', () => { state.routinesDeclined.push(d.id); });
+      if (act === 'checkinArrive' || act === 'checkinHeard') return commit(act === 'checkinArrive' ? `${nameOf(state.viewer)} arrived` : 'Heard from them; the check in is closed', () => { state.checkins = state.checkins.map((c) => (c.id === d.id ? arrive(c, state.now) : c)); });
+      if (act === 'watchDismiss') return commit('Dismissed a reminder', () => { state.watches.find((w) => w.id === d.id).dismissed = true; });
+      if (act === 'expiryDone') { const x = state.expiries.find((e) => e.id === d.id); return commit(`Done: ${x.title}`, () => { x.done = true; }); }
+      if (act === 'advPlan') { const [q, s] = d.id.split('|'); const [day, from] = extra.split('|').map(Number); return planStop(q, s, day, from); }
+      if (act === 'planYes') return commit('Agreed to an outing', () => { const c = state.commitments.find((x) => x.id === d.id); c.pending.asks = c.pending.asks.filter((id) => id !== state.viewer); if (!c.pending.asks.length) delete c.pending; });
+      if (act === 'planNo') { commit('Declined an outing; it is off the week', () => { state.commitments.find((x) => x.id === d.id).status = 'cancelled'; }); return toast('Taken off the week. Nothing else changed.'); }
+      if (act === 'toldOk') return set({ told: state.told.filter((t) => t.id !== d.id) });
+      if (act === 'toldUndo') { const t = state.told.find((x) => x.id === d.id); state.autoSkipped = [...(state.autoSkipped || []), t.key]; state.told = state.told.filter((x) => x.id !== d.id); restore(t.historyId); return toast('Undone. It will ask you next time.'); }
       return null;
     },
     showAll: () => set({ homeAll: !state.homeAll }),

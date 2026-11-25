@@ -320,3 +320,16 @@ label.between input[type="checkbox"] { width: 20px; height: 20px; accent-color: 
 .kid-text { font: 600 20px/1.3 var(--font-display); }
 
 @media (max-width: 1023px) { .toast { bottom: calc(136px + env(safe-area-inset-bottom)); } }
+
+/* Round four: connections, safety, adventures */
+ul.plain, ol.plain { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+textarea.input { min-height: 104px; resize: vertical; font: inherit; line-height: 1.45; }
+details.plan { border-top: 1px solid var(--line); padding: 12px 0; }
+details.plan:first-of-type { border-top: 0; }
+details.plan summary { cursor: pointer; font-weight: 600; min-height: 28px; }
+details.plan ol { margin-top: 8px; }
+.track-bar { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.track-bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.jcard.told { background: var(--accent-soft); border-color: transparent; }
+.jcard.told .jcard-icon { background: var(--surface); }
+.seg button[disabled] { opacity: 0.45; cursor: not-allowed; }

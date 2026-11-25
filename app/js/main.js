@@ -1,7 +1,7 @@
 // Shell: navigation, routing, the viewer switch, and sign in.
 // Home is the one surface; every other screen is something Home draws on.
 
-import { state, subscribe, set, emit, member, nameOf } from './store.js';
+import { state, subscribe, set, emit, member, nameOf, syncDeviceData } from './store.js';
 import { esc, icon, avatar, toast } from './ui.js';
 import * as names from './names.js';
 import home from './views/home.js';
@@ -19,6 +19,9 @@ import history from './views/history.js';
 import dinner from './views/dinner.js';
 import namesView from './views/names.js';
 import know from './views/know.js';
+import adventures from './views/adventures.js';
+import safety from './views/safety.js';
+import connections from './views/connections.js';
 
 const ROUTES = [
   { id: 'home', label: 'Home', icon: 'house', view: home, group: '', tab: true },
@@ -28,6 +31,9 @@ const ROUTES = [
   { id: 'ripple', label: 'Change something', icon: 'graph', view: ripple, group: 'Plan' },
   { id: 'rota', label: 'Rota and swaps', icon: 'arrows-left-right', view: rota, group: 'Plan' },
   { id: 'seasons', label: 'Classes and home', icon: 'books', view: seasons, group: 'Plan' },
+  { id: 'adventures', label: 'Adventures', icon: 'compass', view: adventures, group: 'Together and safe' },
+  { id: 'safety', label: 'Safety', icon: 'shield-check', view: safety, group: 'Together and safe' },
+  { id: 'connections', label: 'Connections', icon: 'plugs-connected', view: connections, group: 'Together and safe' },
   { id: 'triage', label: 'Triage', icon: 'tray', view: triage, group: 'Inbox' },
   { id: 'notifications', label: 'My notifications', icon: 'bell', view: notifications, group: 'Inbox' },
   { id: 'simulator', label: 'Day simulator', icon: 'play-circle', view: simulator, group: 'See how it works' },
@@ -168,6 +174,7 @@ function lockSheet() {
       button.textContent = 'Checking';
       try {
         await names.unlock(input.value);
+        await syncDeviceData();
         failures = 0;
         closeOverlay();
         emit();
@@ -196,7 +203,7 @@ const globalActions = {
   closeOverlay,
   setViewer: (d) => { closeOverlay(); set({ viewer: d.id, thread: [], homeAll: false }); toast(`Viewing as ${nameOf(d.id)}.`); },
   lockSheet,
-  lockNow: async () => { await names.lock(); closeOverlay(); emit(); toast('Locked. This device shows codes again.'); },
+  lockNow: async () => { await names.lock(); await syncDeviceData(); closeOverlay(); emit(); toast('Locked. This device shows codes again.'); },
   go: (d) => go(d.id),
 };
 
@@ -226,5 +233,5 @@ shell();
 subscribe(paint);
 window.addEventListener('hashchange', () => { closeOverlay(); paint(); });
 // If this device was unlocked before, show names again without asking.
-names.resume().then((ok) => { if (ok) paint(); });
+names.resume().then(async (ok) => { if (ok) { await syncDeviceData(); paint(); } });
 paint();

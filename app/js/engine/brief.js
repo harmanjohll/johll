@@ -1,11 +1,14 @@
 // The brief: what matters to one person right now, as a lead sentence and a short
 // stack of cards. Each card is one decision, with its reason. Code decides the order.
 
-import { abs, dayOf, minuteOf, fmtTime, DAYS, fmtDuration } from './time.js';
+import { abs, dayOf, minuteOf, fmtTime, DAYS, fmtDuration, fmtDayDate } from './time.js';
 import { findClashes } from './clash.js';
 import { drivingLoad } from './load.js';
 import { checkDish } from './pantry.js';
 import { openOffers, describeRoutine } from './routines.js';
+import { overdueFor, activeBy, isOverdue, dueWatches } from './checkin.js';
+import { bestWindow } from './freetime.js';
+import { nextStop } from './adventures.js';
 
 const inSentence = (title) => title.replace(/^(\{\w+\}), (.+)$/, "$1's $2");
 const strip = (title, v) => (title.startsWith(`{${v}}, `) ? title.slice(v.length + 4).replace(/^./, (ch) => ch.toUpperCase()) : inSentence(title));
@@ -41,6 +44,11 @@ export function brief(s, v) {
     if (!plan || plan.cook !== v || r.by === v) continue;
     const dish = s.dinner.dishes.find((d) => d.id === r.dish);
     add({ id: `req-${r.id}`, kind: 'request', rank: 78, title: `{${r.by}} asks for ${dish.name.toLowerCase()} on ${DAYS[r.day]}`, why: `You cook on ${DAYS[r.day]}, so you decide`, actions: [{ label: 'Accept', act: 'reqYes', id: r.id, primary: true }, { label: 'Not this time', act: 'reqNo', id: r.id }] });
+  }
+
+  // An outing someone has pencilled in, which stays only if you agree.
+  for (const c of s.commitments.filter((x) => x.pending && x.status !== 'cancelled' && x.pending.asks.includes(v))) {
+    add({ id: `plan-${c.id}`, kind: 'request', rank: 70, title: `{${c.pending.by}} suggests ${DAYS[c.day]} at ${fmtTime(c.start)}: ${c.title.replace(/^Quest: /, 'the quest stop at ')}, ${c.place}`, why: 'It is pencilled in, and it stays only if you agree', actions: [{ label: 'Sounds good', act: 'planYes', id: c.id, primary: true }, { label: 'Not this time', act: 'planNo', id: c.id }] });
   }
 
   // 3. A clash this week that is yours.
@@ -104,6 +112,43 @@ export function brief(s, v) {
   // 10. A repeat it has noticed, offered to whoever owns it.
   for (const r of openOffers(s.log || [], s.routines || [], s.routinesDeclined || []).filter((x) => x.owner === v)) {
     add({ id: `routine-${r.id}`, kind: 'routine', rank: 20, title: `Make this a routine? ${describeRoutine(r)}`, why: `It has happened ${r.count} weeks running`, actions: [{ label: 'Make it a routine', act: 'routineYes', id: r.id, primary: true }, { label: 'No', act: 'routineNo', id: r.id }] });
+  }
+
+  // 11. Check ins. The person chosen is told only when one runs overdue; nobody is tracked.
+  for (const c of overdueFor(s.checkins, v, s.now)) {
+    add({ id: `ci-${c.id}`, kind: 'checkin', rank: 105, urgent: true, title: `{${c.by}} has not checked in: ${c.label.charAt(0).toLowerCase()}${c.label.slice(1)}, expected by ${fmtTime(minuteOf(c.due))}`, why: `{${c.by}} chose you to be told if this ran over. Nobody is being tracked`, actions: [{ label: 'I have heard from them', act: 'checkinHeard', id: c.id, primary: true }] });
+  }
+  for (const c of activeBy(s.checkins, v)) {
+    const over = isOverdue(c, s.now);
+    add({ id: `myci-${c.id}`, kind: 'checkin', rank: over ? 104 : 58, urgent: over, title: `Your check in: ${c.label.charAt(0).toLowerCase()}${c.label.slice(1)}, expected by ${fmtTime(minuteOf(c.due))}`, why: over ? `It is past the time, so {${c.to}} has been told` : `{${c.to}} is told only if you are overdue`, actions: [{ label: 'I have arrived', act: 'checkinArrive', id: c.id, primary: true }] });
+  }
+
+  // 12. A reminder you asked for, which stayed quiet unless the thing was still open.
+  for (const w of dueWatches(s.watches, s.commitments, v, s.now)) {
+    const c = s.commitments.find((x) => x.id === w.cid);
+    const asked = `You asked to be told at ${fmtTime(minuteOf(w.at))} if this was still open`;
+    const existing = cards.find((x) => x.id === `ack-${c.id}`);
+    if (existing) { existing.why = `${existing.why}. ${asked}`; existing.rank = Math.max(existing.rank, 101); existing.urgent = true; continue; }
+    add({ id: `watch-${w.id}`, kind: 'watch', rank: 96, urgent: true, title: `Still not confirmed: ${strip(c.title, v).toLowerCase()} at ${fmtTime(c.start)}`, why: asked, actions: me.adult ? [{ label: 'I will take it', act: 'ack', id: c.id, primary: true }, { label: 'Dismiss', act: 'watchDismiss', id: w.id }] : [{ label: 'Dismiss', act: 'watchDismiss', id: w.id, primary: true }] });
+  }
+
+  // 13. Something dated that is yours and coming due. Dates only; no numbers are held.
+  for (const x of (s.expiries || []).filter((e) => e.owner === v && !e.done)) {
+    const actBy = Math.min(x.inDays, x.needBy ?? x.inDays);
+    if (actBy - day > 14) continue;
+    const overdue = x.inDays < day;
+    const title = overdue ? `${x.title} is overdue` : x.kind === 'document' ? `${x.title} expires on ${fmtDayDate(x.inDays)}` : `${x.title}: due ${fmtDayDate(x.inDays)}`;
+    add({ id: `exp-${x.id}`, kind: 'expiry', rank: overdue ? 44 : 38, title, why: x.note, actions: [{ label: 'Done', act: 'expiryDone', id: x.id, primary: true }, { label: 'Later', act: 'later', id: `exp-${x.id}` }] });
+  }
+
+  // 14. An outing, offered when everyone has the same time free. Always the lowest priority.
+  if (me.adult) {
+    const next = nextStop(s.adventures);
+    const planned = next && s.commitments.some((c) => c.questStop === next.stop.id && c.status !== 'cancelled');
+    const window = next && !planned ? bestWindow(s.commitments, s.members.map((m) => m.id), [5, 6].filter((d) => d >= day)) : null;
+    if (window) {
+      add({ id: `adv-${next.stop.id}`, kind: 'adventure', rank: 12, title: `${DAYS[window.day]} from ${fmtTime(window.from)} is free for everyone. Next on the quest: ${next.stop.place}, ${next.stop.area}?`, why: `It is the next stop on "${next.quest.title}", and nobody has anything on`, actions: [{ label: 'Plan it', act: 'advPlan', id: `${next.quest.id}|${next.stop.id}`, v: `${window.day}|${window.from}`, primary: true }, { label: 'Later', act: 'later', id: `adv-${next.stop.id}` }] });
+    }
   }
 
   cards.sort((a, b) => b.rank - a.rank);

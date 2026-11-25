@@ -53,3 +53,20 @@ export function toast(message) {
 }
 
 export const plural = (n, word, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
+
+// Hand the person a file to keep. Nothing is uploaded: the file is made in the browser.
+export function download(filename, text, type = 'text/calendar;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// The two honest labels: what works in this prototype, and what waits for the server.
+export const worksBadge = (works) => (works === 'today'
+  ? `<span class="badge accent">${icon('check')} Works today</span>`
+  : `<span class="badge calm">${icon('hourglass')} Waits for the server</span>`);

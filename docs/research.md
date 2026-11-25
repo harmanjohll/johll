@@ -85,6 +85,37 @@ Two further strands looked for the single best mechanism in each small group coo
 
 **A warning from the same research:** Height (September 2025), Clockwise (March 2026) and Ollie (November 2026) all shut down, some deleting user data. The household must own its data and be able to export it.
 
+## 9. Third round: assistants and automation (25 November 2026)
+
+What the best assistants do, from secondary coverage (primary pages could not be opened):
+
+* Read freely, act only with approval. Claude Duet and OpenAI's agent keep sending, paying, signing and deleting behind a person's approval. [9to5Mac](https://9to5mac.com/2026/10/21/anthropic-takes-on-chatgpt-dots-and-meta-muse-with-claude-duet/), [SiliconANGLE](https://siliconangle.com/2026/09/29/openai-launches-dots-always-on-ai-agents-in-chatgpt-with-their-own-cloud-computers/)
+* A separate policy system decides whether each action is allowed, blocked or sent to the user. [Meta](https://about.fb.com/news/2026/09/introducing-muse-personal-ai-agent/)
+* Share, extract, preview, confirm: nothing is added silently. [Google Workspace](https://workspaceupdates.googleblog.com/2025/03/add-events-to-google-calendar-using-gemini-in-gmail.html)
+* Reminders that cancel themselves when the condition is met. [Superhuman](https://help.superhuman.com/hc/en-us/articles/43822934607251-Remind-Me)
+* Watch only the sources the family chooses. [TechCrunch on Fambot](https://techcrunch.com/2026/09/01/fambot-introduces-an-ai-chief-of-staff-for-families/)
+* Levels of autonomy designed separately from capability. [Knight Columbia](https://knightcolumbia.org/content/levels-of-autonomy-for-ai-agents-1)
+* Learned behaviour is accepted when it is intelligible and exceptions are flagged. [Nest study, UbiComp 2013](https://www.mwnewman.people.si.umich.edu/fulltext/ubicomp2013-learningtherm.pdf)
+
+How assistants lose trust: wrong facts entered silently, interrupting at the wrong moment, reaching beyond the data given, routines that break quietly, and ignoring that a household has people with unequal power.
+
+## 10. Third round: security and safety
+
+* Passkeys work in a web app added to the Home Screen; a free gate in front of the app can email one time codes to approved addresses. [Cloudflare](https://developers.cloudflare.com/cloudflare-one/identity/one-time-pin/)
+* The OWASP list for AI applications puts prompt injection first and excessive agency sixth; the answer is least privilege and human approval for consequential actions. [Invicti summary](https://invicti.com/blog/web-security/owasp-top-10-risks-llm-security-2025)
+* Apple's Check In alerts a chosen contact only when a trip runs overdue, with no live tracking: the model copied here. [Apple](https://support.apple.com/guide/personal-safety/ips56b5bc469/web)
+* In one analysis of reviews of child monitoring apps, nearly 1 in 5 children said they felt watched and about 1 in 10 said it broke their trust. [MIT Technology Review](https://www.technologyreview.com/2026/08/19/1141623/child-monitoring-apps-need-reboot/)
+* Singapore: the ScamShield helpline is 1799; every bank offers a kill switch. [ScamShield](https://scamshield.gov.sg/kill-switch/)
+* A family safe word, agreed in person, is the consensus advice against voice cloning scams. [Fortune](https://fortune.com/2026/10/24/ai-voice-cloning-scam-fake-kidnapping-safe-word/)
+
+## 11. Third round: sync and integrations
+
+* Almost every automatic connection needs the server. Without it: a calendar file to download, and links the person taps.
+* Best value once the server exists: a private calendar feed per person, notifications, a "send to the portal" shortcut on iPhone, a personal forwarding address, then two way Google Calendar.
+* Subscribed calendar feeds refresh slowly: about 15 minutes on iPhone, up to a day on Google. [Microsoft Q&A on Outlook](https://learn.microsoft.com/en-au/answers/questions/4479407/calendar-subscription-does-not-refresh)
+* Sharing into a web app from the iPhone share sheet is not supported; an Apple Shortcut is the reliable route. [WebKit bug 194593](https://bugs.webkit.org/show_bug.cgi?id=194593)
+* Not realistically possible: bots in existing WhatsApp groups, Apple Reminders from the web, iMessage, SMS sender names, Parents Gateway, HealthHub, Singpass, banks, background location.
+
 ## 8. Unverified: check at source before relying on these
 
 1. That an existing WhatsApp group cannot be brought under the official interface (rests on a developer forum post).
@@ -99,4 +130,6 @@ Two further strands looked for the single best mechanism in each small group coo
 10. Home speaker announcements as a nudge channel (an idea, not researched).
 11. The name lock (24 November 2026): four digits on a public site can be tried exhaustively. Revisit as soon as hosting moves behind a proper sign in; until then it guards names only.
 12. Whether saving an unlock key in the browser's key store survives on iPhone when the site is added to the home screen. Not tested on a real device.
-13. The statistics and product behaviours in section 7, most of which come from vendor pages read as search summaries.
+13. Everything in sections 9 to 11: gathered from search summaries, much of it from vendors or secondary coverage. In particular: how passkeys behave for a supervised child account; the calendar feed refresh times; and the statement on the Safety screen that the Online Safety Commission helps victims of online harm.
+14. The scam check's rules are my own patterns for common scam shapes, not a tested classifier. It will miss new shapes.
+15. The statistics and product behaviours in section 7, most of which come from vendor pages read as search summaries.
