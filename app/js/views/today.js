@@ -3,6 +3,7 @@
 import { state, commit, set, member, nameOf } from '../store.js';
 import { esc, icon, avatar, who, NEED_ICON, toast, plural } from '../ui.js';
 import { dayOf, minuteOf, fmtTime, fmtDate, abs } from '../engine/time.js';
+import { downloadWeek } from './connections.js';
 
 // Your own items do not need your name in front: "{H}, late meeting" becomes "Late meeting".
 const mine = (title, v) => (title.startsWith(`{${v}}, `) ? title.slice(v.length + 4).replace(/^./, (ch) => ch.toUpperCase()) : title);
@@ -25,7 +26,7 @@ function row(c, v, nowMin) {
     <div class="tl-time"><b>${fmtTime(c.start)}</b>${fmtTime(c.end)}</div>
     <div class="tl-body">
       <div class="between"><div><div class="tl-title">${esc(mine(c.title, v))}</div><div class="meta">${esc(c.place)}${role ? `${c.place ? ', ' : ''}${role.toLowerCase()}` : ''}</div></div>
-        ${c.type === 'school' || c.type === 'rest' ? '' : `<button class="btn small quiet" data-act="change" data-id="${c.id}" aria-label="Change ${esc(c.title)}">${icon('graph')}Change</button>`}</div>
+        ${c.type === 'school' || c.type === 'rest' ? '' : `<span class="cluster"><button class="btn small quiet icon" data-act="ics" data-id="${c.id}" aria-label="Add ${esc(c.title)} to my calendar" title="Add to my calendar">${icon('download-simple')}</button><button class="btn small quiet" data-act="change" data-id="${c.id}" aria-label="Change ${esc(c.title)}">${icon('graph')}Change</button></span>`}</div>
       <div class="cluster">
         ${c.owner && c.type !== 'school' ? `<span class="chip">${avatar(c.owner, 'sm')}Owner: ${esc(nameOf(c.owner))}</span>` : ''}
         ${c.driver ? `<span class="chip">${icon('steering-wheel')}${esc(nameOf(c.driver))} drives</span>` : ''}
@@ -103,6 +104,7 @@ export default {
       commit(`${nameOf(state.viewer)} confirmed: ${c.title}`, () => { c.ack = 'acked'; c.ackBy = state.viewer; });
       toast('Confirmed. Nobody else will be asked.');
     },
+    ics: (d) => downloadWeek(state.viewer, d.id),
     change: (d) => { set({ draft: { cid: d.id, patch: {}, choices: {} } }); location.hash = '#/ripple'; },
     readback: () => set({ handoffRead: { by: state.viewer, at: minuteOf(state.now) } }),
     clock: (d) => {

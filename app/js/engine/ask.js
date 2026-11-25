@@ -2,10 +2,14 @@
 // by pattern, answers from live state, and says plainly when it does not understand.
 // People in replies are tokens such as {A2}; the screen shows the reader's name for them.
 
-import { DAYS, DAYS_SHORT, dayOf, minuteOf, fmtTime } from './time.js';
+import { DAYS, DAYS_SHORT, dayOf, minuteOf, fmtTime, abs } from './time.js';
 import { parseCapture } from './parse.js';
 import { levelOf } from './pantry.js';
 import { brief } from './brief.js';
+import { checkScam } from './scam.js';
+import { activeBy } from './checkin.js';
+import { nextStop } from './adventures.js';
+import { bestWindow } from './freetime.js';
 
 const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const inSentence = (title) => title.replace(/^(\{\w+\}), (.+)$/, "$1's $2");
@@ -15,6 +19,7 @@ export const CAN_DO = [
   'Answer: who collects, who cooks, what is for dinner, what is on a day, where someone is, when an activity is',
   'Record: type what is happening, such as "Netball Fri 3pm"',
   'Act: add to the grocery list, say we are out of something, move an appointment, ask the cook for a dish',
+  'Watch: "remind me at 1:15 if nobody has confirmed", "is this a scam: ...", "add my week to my calendar"',
 ];
 
 function findPeople(text, people) {
@@ -67,7 +72,7 @@ export function ask(input, s, v, people = s.members) {
 
   // Commands.
   let m = t.match(/^(?:please\s+)?(?:add|put|buy|we need|get)\s+(?:some\s+|more\s+)?(.+?)(?:\s+(?:to|on)\s+(?:the\s+|our\s+)?(?:grocery\s+|shopping\s+)?list)?$/);
-  if (m && !/\b(mon|tue|wed|thu|fri|sat|sun|tomorrow|today|\d(am|pm))\b/.test(m[1])) {
+  if (m && !/\b(mon|tue|wed|thu|fri|sat|sun|tomorrow|today|\d(am|pm)|calendar|week|schedule|diary)\b/.test(m[1])) {
     const item = m[1].trim();
     return { kind: 'action', do: { type: 'addGrocery', item }, text: `Added ${item} to the grocery list.` };
   }
@@ -107,9 +112,41 @@ export function ask(input, s, v, people = s.members) {
   }
   m = t.match(/^(?:go to|open|show(?: me)?)\s+(?:the\s+)?(.+)$/);
   if (m) {
-    const routes = { week: 'week', dinner: 'dinner', pantry: 'dinner', groceries: 'dinner', 'grocery list': 'dinner', 'my day': 'today', today: 'today', triage: 'triage', inbox: 'triage', board: 'board', rota: 'rota', swaps: 'rota', ripple: 'ripple', seasons: 'seasons', classes: 'seasons', mirror: 'mirror', history: 'history', names: 'names', simulator: 'simulator', notifications: 'notifications', 'what you know': 'know', 'what i know': 'know' };
+    const routes = { safety: 'safety', 'scam check': 'safety', connections: 'connections', adventures: 'adventures', quests: 'adventures', week: 'week', dinner: 'dinner', pantry: 'dinner', groceries: 'dinner', 'grocery list': 'dinner', 'my day': 'today', today: 'today', triage: 'triage', inbox: 'triage', board: 'board', rota: 'rota', swaps: 'rota', ripple: 'ripple', seasons: 'seasons', classes: 'seasons', mirror: 'mirror', history: 'history', names: 'names', simulator: 'simulator', notifications: 'notifications', 'what you know': 'know', 'what i know': 'know' };
     const key = Object.keys(routes).find((k) => m[1].includes(k));
     if (key) return { kind: 'action', do: { type: 'go', route: routes[key] }, text: 'Opening it.' };
+  }
+
+  // Safety, watches, calendar and adventures.
+  m = text.match(/^(?:is (?:this|it) a scam|scam check|check (?:this|if this is a scam)|is this real)\s*[:,?]?\s*([\s\S]*)$/i);
+  if (m) {
+    if (!m[1].trim()) return { kind: 'action', do: { type: 'go', route: 'safety' }, text: 'Paste the message into the scam check.' };
+    const r = checkScam(m[1]);
+    return { kind: 'answer', text: `${r.headline}.`, bullets: [...r.signs.map((x) => `Sign: ${x}`), ...r.steps], note: 'A rule check, not an AI. It knows only common patterns and keeps nothing.' };
+  }
+  m = t.match(/^(?:remind|tell|ping|nudge) me (?:at|by) (.+?) if (?:nobody|no one|noone) (?:has |have )?(?:confirm(?:s|ed)?|taken|got)\b/);
+  if (m) {
+    const when = parseCapture(`x ${m[1]}`, people, today);
+    const c = on(today).find((x) => x.ack === 'pending' && x.end >= nowMin);
+    if (!c) return answer('Nothing is waiting to be confirmed today, so there is nothing to watch.');
+    if (when.start == null) return answer('At what time? For example: "remind me at 1:15pm if nobody has confirmed".');
+    if (when.start <= nowMin) return answer(`${fmtTime(when.start)} has already passed. Give a time later today.`);
+    return { kind: 'action', do: { type: 'watch', cid: c.id, at: abs(today, when.start) }, text: `I will tell you at ${fmtTime(when.start)}, but only if this is still unconfirmed: ${inSentence(c.title).replace(/^./, (ch) => ch.toLowerCase())}, ${fmtTime(c.start)}. If someone confirms first, you will hear nothing.` };
+  }
+  if (/^(i(?:'m| am| have)? (?:home|arrived|here|back)|arrived|i got home|i reached)\b/.test(t)) {
+    const c = activeBy(s.checkins, v)[0];
+    if (c) return { kind: 'action', do: { type: 'arrive', id: c.id }, text: `Checked in. {${c.to}} will not be troubled.` };
+    return answer('You have no check in running. You can start one under Safety.');
+  }
+  if (/\b(start|begin|set up) a check ?in\b|^check ?in$/.test(t)) return { kind: 'action', do: { type: 'go', route: 'safety' }, text: 'Opening check in. You choose who is told, and only if you are overdue.' };
+  if (/\b(add|export|download|send|put)\b.*\b(my )?(week|calendar|schedule|diary)\b.*\b(calendar|phone|file)\b|^(export|download) my (week|calendar)$/.test(t)) {
+    return { kind: 'action', do: { type: 'ics' }, text: 'Here is your week as a calendar file. Open it and your calendar app will offer to add the events.' };
+  }
+  if (/\b(quest|adventure|next stop|bak chor mee|where shall we go|what shall we do this weekend)\b/.test(t)) {
+    const next = nextStop(s.adventures);
+    if (!next) return answer('Every stop on your quests is done. Add a new quest under Adventures.');
+    const w = bestWindow(s.commitments, s.members.map((x) => x.id), [5, 6].filter((d) => d >= today));
+    return answer(`Next on "${next.quest.title}": ${next.stop.place}, ${next.stop.area}.${w ? ` ${DAYS[w.day]} from ${fmtTime(w.from)} is free for everyone.` : ' I cannot see a time this weekend when everyone is free.'}`);
   }
 
   // Questions.

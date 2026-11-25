@@ -168,7 +168,6 @@ export function createHousekeeping() {
       { title: 'Aircon servicing', owner: 'H', last: '14 weeks ago', every: 'About every 12 weeks', level: 'red' },
       { title: 'Water filter cartridge', owner: 'K', last: '5 months ago', every: 'About every 6 months', level: 'amber' },
       { title: 'Car servicing', owner: 'H', last: '4 months ago', every: 'Every 6 months', level: 'calm' },
-      { title: 'Passports', owner: 'K', last: 'One expires in March', every: 'Renew before the December trip', level: 'amber' },
     ],
   };
 }
@@ -200,7 +199,7 @@ export function createDinner() {
       { key: 'pasta', label: 'Spaghetti', category: 'dry', bought: -30 },
       { key: 'tinned tomatoes', label: 'Tinned tomatoes', category: 'tinned', bought: -40 },
       { key: 'garlic', label: 'Garlic', category: 'roots', bought: -9 },
-      { key: 'onion', label: 'Onions', category: 'roots', bought: -9 },
+      { key: 'onion', label: 'Onions', category: 'roots', bought: -13 },
       { key: 'eggs', label: 'Eggs', category: 'eggs', bought: -9 },
       { key: 'frozen peas', label: 'Frozen peas', category: 'frozen', bought: -25 },
       { key: 'minced beef', label: 'Minced beef', category: 'frozen', bought: -2 },
@@ -247,4 +246,79 @@ export function createPrefs() {
     { id: 'pf3', about: 'A2', text: 'Is always collected from school by a parent', source: 'Told by {K}, 2 November' },
     { id: 'pf4', about: 'H', text: 'Drives at most 8 runs a week for other people', source: 'Set by {H} in the week view' },
   ];
+}
+
+// Dated things to renew or look after. Dates only: no document or card numbers are ever held.
+// inDays counts from Monday of the sample week; needBy is when action is really needed, if sooner.
+export function createExpiries() {
+  return [
+    { id: 'x1', kind: 'payment', title: 'Road tax', owner: 'H', inDays: 12, note: 'It can be renewed online' },
+    { id: 'x2', kind: 'device', title: 'Phone backup', owner: 'K', inDays: -9, note: 'The last backup was 40 days ago' },
+    { id: 'x3', kind: 'device', title: 'Kitchen tablet software update', owner: 'H', inDays: 3, note: 'Updates close security holes' },
+    { id: 'x4', kind: 'payment', title: 'Streaming subscription renews', owner: 'K', inDays: 26, note: 'Decide whether to keep it' },
+    { id: 'x5', kind: 'document', title: 'A passport', owner: 'K', inDays: 99, needBy: 10, note: 'Many countries ask for six months left, and the trip is in December' },
+    { id: 'x6', kind: 'document', title: 'Home insurance', owner: 'H', inDays: 64, note: 'Compare before it renews by itself' },
+  ];
+}
+
+// Each person's own choices about what the portal connects to.
+// "wanted" records a preference for connections that wait for the server.
+export function createConnections() {
+  const base = () => ({ ics: { on: true, detail: 'full' }, whatsapp: { on: true }, feed: { wanted: false, detail: 'full' }, send: { wanted: false }, push: { wanted: false }, gcal: { wanted: false, direction: 'both', detail: 'full' } });
+  const H = base(); H.feed.wanted = true; H.push.wanted = true; H.gcal.wanted = true; H.send.wanted = true;
+  const K = base(); K.push.wanted = true; K.send.wanted = true; K.feed.wanted = true; K.feed.detail = 'busy';
+  const A1 = base(); A1.push.wanted = true; A1.whatsapp.on = false;
+  const A2 = base(); A2.ics.on = false; A2.whatsapp.on = false;
+  return { H, K, A1, A2 };
+}
+
+// How far each automation is trusted. See app/js/engine/policy.js for the rules.
+export function createAutomations() {
+  return [
+    { id: 'au1', action: 'remind', title: 'Remind the owner 30 minutes before a pickup', level: 'tell', accepted: 12 },
+    { id: 'au2', action: 'escalate', title: 'Ask the other parent when a pickup is still unconfirmed', level: 'tell', accepted: 9 },
+    { id: 'au3', action: 'list', title: "Add what tonight's dish is missing to the grocery list", level: 'ask', accepted: 5 },
+    { id: 'au4', action: 'routine', title: 'Offer to make a repeat a routine', level: 'suggest', accepted: 1 },
+    { id: 'au5', action: 'message', title: 'Draft the family group message when a plan changes', level: 'suggest', accepted: 6 },
+    { id: 'au6', action: 'move', title: 'Hold dinner when someone is running late', level: 'suggest', accepted: 2 },
+  ];
+}
+
+// Adventures: quests to work through together, and places the family has been.
+// Every stop, date, rating and note below is invented and marked as a sample.
+// What the family adds is kept on the device only, encrypted; it is never in this repo.
+export function createAdventures() {
+  const all = ['H', 'K', 'A1', 'A2'];
+  return {
+    sample: true,
+    quests: [
+      {
+        id: 'q1', icon: 'bowl-food', title: 'Bak chor mee across the island', blurb: 'One bowl at a time. Everyone rates it out of five.',
+        stops: [
+          { id: 's1', place: 'Stall one (sample)', area: 'Bedok', done: true, day: -23, went: all, ratings: { H: 4, K: 3, A1: 5, A2: 4 }, note: 'Springy noodles; the queue was twenty minutes' },
+          { id: 's2', place: 'Stall two (sample)', area: 'Tiong Bahru', done: true, day: -16, went: all, ratings: { H: 5, K: 4, A1: 4, A2: 4 }, note: 'More vinegar; soup on the side' },
+          { id: 's3', place: 'Stall three (sample)', area: 'Hougang', done: true, day: -9, went: ['H', 'A1'], ratings: { H: 3, A1: 4 }, note: 'After the match; too much chilli for some' },
+          { id: 's4', place: 'Stall four (sample)', area: 'Toa Payoh', done: false },
+          { id: 's5', place: 'Stall five (sample)', area: 'Jurong East', done: false },
+          { id: 's6', place: 'Stall six (sample)', area: 'Chinatown', done: false },
+          { id: 's7', place: 'Stall seven (sample)', area: 'Ang Mo Kio', done: false },
+          { id: 's8', place: 'Stall eight (sample)', area: 'Katong', done: false },
+        ],
+      },
+      {
+        id: 'q2', icon: 'compass', title: 'Walks worth the drive', blurb: 'Outdoor mornings, rated by how good the walk was.',
+        stops: [
+          { id: 'w1', place: 'A reservoir loop (sample)', area: 'Central', done: true, day: -30, went: all, ratings: { H: 4, K: 5, A1: 3, A2: 4 }, note: 'Monkeys on the boardwalk; start before eight' },
+          { id: 'w2', place: 'A coastal boardwalk (sample)', area: 'North east', done: false },
+          { id: 'w3', place: 'An island by bumboat (sample)', area: 'East', done: false },
+          { id: 'w4', place: 'A wetland reserve (sample)', area: 'North west', done: false },
+        ],
+      },
+    ],
+    places: [
+      { id: 'pl1', year: 2025, where: 'A long weekend by the sea (sample)', line: 'First trip with the snorkels' },
+      { id: 'pl2', year: 2025, where: 'A city break (sample)', line: 'Three museums and one very long walk' },
+      { id: 'pl3', year: 2024, where: 'A holiday in the hills (sample)', line: 'Cold enough for jackets' },
+    ],
+  };
 }

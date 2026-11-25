@@ -67,6 +67,17 @@ The Science Lab becomes one spoke of the portal.
 * Learning is counting and being told, and it is always visible: the "What I know" screen lists every routine and preference held, with its source and a way to remove it.
 * The assistant has no brand name in the app; it speaks as the portal. A name can be chosen later.
 
+### 5.3 Decisions taken on 25 November 2026
+
+After a scan of the best assistants, safety apps and integrations (see `docs/research.md`, sections 9 to 11):
+
+* **Honest labels.** Every connection and safety feature is marked "Works today" or "Waits for the server". A waiting feature is shown as a design to judge, never as if it worked.
+* **Connections are per person.** Each person chooses what the portal links to, the direction, and what is shared (full details or busy only). A parent manages a young child's; a parent can see that a teenager has a connection but cannot change it. Today only the calendar file and tap to share work; a calendar feed, notifications, "send to the portal" and two way Google Calendar wait for the server.
+* **Safety means helping the family look after itself**, not watching it: a rule based scam check that keeps nothing, a family safe word that is never typed in, arrival check in with no map (the person travelling starts it and chooses who is told, and only if overdue), dated reminders that hold no document numbers, and short "what to do" plans. Medical and emergency details wait for proper sign in.
+* **The rules table** (`app/js/engine/policy.js`) is code. Each automation is trusted at one of three levels: suggest; ask, then act; act, then tell. A step up is earned only by repeated acceptance, anyone can pull it back, and anything that leaves the portal or changes a plan can never go above "ask". No model may change this table.
+* **Adventures.** Quests the family works through together (a food trail, walks) and places it has been, with ratings from each person. The portal offers the next stop when everyone is free. The published site carries only invented, labelled samples; what the family adds is real family data and is kept on the device only, encrypted, until the server exists.
+* **Not to be built:** live location tracking, reading anyone's messages, storing passwords or bank logins, and any AI that sends, pays, books or unlocks without a tap.
+
 ## 6. Principles
 
 * **Code decides, the model words.** Clash detection, routing and scheduling are deterministic code. The language model reads messages and phrases proposals; it never decides a clash and never acts alone.
@@ -238,5 +249,5 @@ A clickable prototype is part of Phase 0, so the contract can be judged by using
 * The completed household sheet.
 * Access to the blocked documentation sites from the build environment, so the unverified facts in `docs/research.md` can be checked at source.
 
-*Last updated: 24 November 2026*
+*Last updated: 25 November 2026*
 *Author: Harman Johll, with Claude (Anthropic)*

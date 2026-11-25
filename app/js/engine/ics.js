@@ -62,6 +62,8 @@ export function eventsFor(commitments, v, say = (x) => x) {
       if (c.owner && c.owner !== v) notes.push(say(`Owner: {${c.owner}}.`));
       const bring = c.needs.filter((n) => !n.done).map((n) => n.label);
       if (bring.length) notes.push(`Still needed: ${bring.join(', ')}.`);
-      return { id: c.id, day: c.day, start: c.start, end: c.end, title: say(c.title), place: c.place, notes: notes.join(' ') };
+      // Your own items do not need your name in front.
+      const own = c.title.startsWith(`{${v}}, `) ? c.title.slice(v.length + 4).replace(/^./, (ch) => ch.toUpperCase()) : c.title;
+      return { id: c.id, day: c.day, start: c.start, end: c.end, title: say(own), place: c.place, notes: notes.join(' ') };
     });
 }

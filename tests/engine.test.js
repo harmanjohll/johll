@@ -229,7 +229,8 @@ test('pantry: a dish is checked against what is likely in the house', () => {
   assert.deepEqual(salmon.missing.sort(), ['broccoli', 'lemon', 'salmon'], 'broccoli bought nine days ago is probably gone');
   assert.equal(salmon.ready, false);
   const bolognese = checkDish(d.dishes.find((x) => x.id === 'bolognese'), d.pantry, 0);
-  assert.equal(bolognese.ready, true);
+  assert.deepEqual(bolognese.unsure, ['onion'], 'onions bought thirteen days ago are worth a look');
+  assert.deepEqual(bolognese.missing, []);
 });
 
 test('pantry: a receipt is read into items, and reading it makes the dish possible', () => {

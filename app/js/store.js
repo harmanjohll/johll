@@ -2,7 +2,7 @@
 
 import * as sample from './data/sample.js';
 import { abs, hm, fmtAbs } from './engine/time.js';
-import { nameFor } from './names.js';
+import { nameFor, saveDevice, loadDevice, isUnlocked } from './names.js';
 
 const listeners = new Set();
 
@@ -25,6 +25,14 @@ export const state = {
   later: [],
   thread: [],
   homeAll: false,
+  expiries: sample.createExpiries(),
+  connections: sample.createConnections(),
+  automations: sample.createAutomations(),
+  adventures: sample.createAdventures(),
+  checkins: [],
+  watches: [],
+  told: [],
+  safeword: { H: false, K: false, A1: false, A2: false },
   tasks: [
     { id: 'task1', title: 'Renew the football season registration', owner: 'H', due: 'Fri', done: false },
     { id: 'task2', title: 'Reply to the playdate invitation', owner: 'K', due: 'Thu', done: false },
@@ -51,7 +59,7 @@ export const household = (overrides = {}) => ({ commitments: state.commitments, 
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 export function emit() { for (const fn of listeners) fn(); }
 
-const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons', 'house', 'dinner', 'routines', 'routinesDeclined', 'prefs'];
+const KEEP = ['commitments', 'tasks', 'triage', 'contracts', 'rota', 'swaps', 'seasons', 'house', 'dinner', 'routines', 'routinesDeclined', 'prefs', 'expiries', 'connections', 'automations', 'adventures', 'checkins', 'watches', 'safeword'];
 const snapshot = () => JSON.stringify(Object.fromEntries(KEEP.map((k) => [k, state[k]])));
 
 // Every change to shared state goes through here, so it is logged and can be undone.
@@ -71,3 +79,16 @@ export function restore(id) {
 }
 
 export function set(patch) { Object.assign(state, patch); emit(); }
+
+// Adventures the family adds are real family data, so they never go into the published
+// site. They are kept on this device only, encrypted with the key that unlocks the names.
+export async function saveAdventures() {
+  if (state.adventures.sample || !isUnlocked()) return false;
+  return saveDevice('adventures', state.adventures);
+}
+
+// Called when the device unlocks or locks: show the family's own, or fall back to the samples.
+export async function syncDeviceData() {
+  const own = isUnlocked() ? await loadDevice('adventures') : null;
+  state.adventures = own || sample.createAdventures();
+}

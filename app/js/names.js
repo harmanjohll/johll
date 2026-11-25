@@ -126,6 +126,24 @@ export async function saveEdits(next) {
   if (key) localStorage.setItem(LOCAL, JSON.stringify(await encryptWith(key, next)));
 }
 
+// Other family data kept on this device only (for example adventures the family adds).
+// It is encrypted with the same key, so it can be read only while the device is unlocked.
+const deviceKey = (name) => `johll.device.${name}`;
+export async function saveDevice(name, value) {
+  if (!key) return false;
+  try { localStorage.setItem(deviceKey(name), JSON.stringify(await encryptWith(key, value))); return true; } catch (e) { return false; }
+}
+export async function loadDevice(name) {
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(deviceKey(name));
+    return raw ? await decryptWith(key, JSON.parse(raw)) : null;
+  } catch (e) { return null; }
+}
+export function clearDevice(name) {
+  try { localStorage.removeItem(deviceKey(name)); } catch (e) { /* Nothing to remove. */ }
+}
+
 export const currentNames = () => names;
 
 // For tests and for callers that hold names another way.

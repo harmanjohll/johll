@@ -7,6 +7,9 @@ import { checkScam, SCAM_EXAMPLES } from '../app/js/engine/scam.js';
 import { startCheckin, arrive, isOverdue, overdueFor, activeBy, startWatch, watchState, dueWatches, GRACE_MIN } from '../app/js/engine/checkin.js';
 import { ACTIONS, LEVELS, NEEDED, clamp, nextLevel, decide, ceiling, whyLocked } from '../app/js/engine/policy.js';
 import { freeWindows, bestWindow } from '../app/js/engine/freetime.js';
+import { brief } from '../app/js/engine/brief.js';
+import { ask } from '../app/js/engine/ask.js';
+import { nextStop, favourite, progress, average } from '../app/js/engine/adventures.js';
 
 const commitments = () => sample.createCommitments();
 
@@ -42,6 +45,8 @@ test('calendar file: only your own commitments, and "busy" hides the details', (
   const mine = eventsFor(commitments(), 'A1');
   assert.ok(mine.every((e) => !e.title.includes('piano')), "A1's file does not carry A2's piano");
   assert.ok(mine.some((e) => e.id === 'violin-3' && /\{H\} drives/.test(e.notes)));
+  assert.equal(mine.find((e) => e.id === 'violin-3').title, 'Violin', 'your own items drop your name');
+  assert.equal(eventsFor(commitments(), 'H').find((e) => e.id === 'violin-3').title, '{A1}, violin', "someone else's keep theirs");
   const busy = buildCalendar(mine, { detail: 'busy' });
   assert.ok(!/violin|football|basketball|Strings Studio|LOCATION|DESCRIPTION/i.test(busy), 'nothing in a busy file says what the event is, not even its identifier');
   assert.equal((busy.match(/SUMMARY:Busy/g) || []).length, mine.length);
@@ -141,4 +146,97 @@ test('free time: windows when everyone is free, and the best one for an outing',
   const best = bestWindow(list, all, [5, 6]);
   assert.deepEqual([best.day, best.from, best.to], [5, hm(17, 30), hm(21)], 'Saturday evening, rounded to the half hour, covers dinner');
   assert.equal(bestWindow(list, all, [0], { min: 180 }), null, 'a school day has no long shared window');
+});
+
+const world = (now = abs(0, hm(12, 40))) => ({
+  members: sample.createMembers(), cars: sample.createCars(), contracts: sample.createContracts(), commitments: sample.createCommitments(),
+  triage: sample.createTriage(), rota: sample.createRota(), dinner: sample.createDinner(), house: sample.createHousekeeping(),
+  tasks: [], swaps: {}, log: [], routines: [], routinesDeclined: [], later: [], handoffRead: true,
+  expiries: sample.createExpiries(), adventures: sample.createAdventures(), checkins: [], watches: [], now,
+});
+const kinds = (w, v) => brief(w, v).cards.map((c) => c.kind);
+
+test('adventures: progress, the running favourite and the next stop', () => {
+  const adv = sample.createAdventures();
+  const quest = adv.quests[0];
+  assert.deepEqual(progress(quest), { done: 3, total: 8 });
+  assert.equal(average(quest.stops[0]), 4);
+  assert.equal(favourite(quest).id, 's2', 'the best average so far');
+  assert.equal(nextStop(adv).stop.id, 's4');
+  assert.ok(adv.sample && quest.stops.every((x) => /\(sample\)/.test(x.place)), 'every published stop is marked as a sample');
+});
+
+test('home: dated things reach their owner, and only when they are close', () => {
+  const h = brief(world(), 'H').cards.filter((c) => c.kind === 'expiry').map((c) => c.title);
+  assert.deepEqual([...h].sort(), ['Kitchen tablet software update: due Thu 26 Nov', 'Road tax: due Sat 5 Dec'], "both of H's near items show");
+  assert.ok(!h.some((t) => /insurance/i.test(t)), 'something 64 days away stays quiet');
+  const k = brief(world(), 'K').cards.filter((c) => c.kind === 'expiry');
+  assert.ok(k.some((c) => c.title === 'Phone backup is overdue'));
+  const passport = k.find((c) => /passport/.test(c.title));
+  assert.equal(passport.title, 'A passport expires on Tue 2 Mar 2027');
+  assert.match(passport.why, /six months left/, 'it is raised early because of the trip, with the reason');
+  assert.ok(!k.some((c) => /Streaming/.test(c.title)));
+  assert.ok(!kinds(world(), 'A1').includes('expiry'));
+});
+
+test('home: an outing is offered to the parents when everyone is free, and never twice', () => {
+  const w = world();
+  const card = brief(w, 'H').cards.at(-1);
+  assert.equal(card.kind, 'adventure', 'it is always the lowest priority');
+  assert.match(card.title, /Saturday from 5:30pm is free for everyone\. Next on the quest: Stall four \(sample\), Toa Payoh/);
+  assert.ok(kinds(w, 'K').includes('adventure'));
+  assert.ok(!kinds(w, 'A1').includes('adventure'), 'children are not asked to plan it');
+  w.commitments.push({ ...w.commitments.find((c) => c.id === 'lunch-6'), id: 'quest-s4', questStop: 's4', day: 5, start: hm(18), end: hm(19, 30) });
+  assert.ok(!kinds(w, 'H').includes('adventure'), 'once planned, it is not offered again');
+});
+
+test('home: an overdue check in reaches only the person chosen', () => {
+  const w = world(abs(0, hm(19, 20)));
+  w.checkins = [startCheckin({ by: 'A1', to: 'K', label: 'Football to home', now: abs(0, hm(18, 30)), due: abs(0, hm(19)) })];
+  const k = brief(w, 'K').cards[0];
+  assert.equal(k.kind, 'checkin');
+  assert.match(k.title, /\{A1\} has not checked in: football to home, expected by 7pm/);
+  assert.match(k.why, /Nobody is being tracked/);
+  assert.ok(!kinds(w, 'H').includes('checkin'), 'the other parent is not told');
+  const mine = brief(w, 'A1').cards.find((c) => c.kind === 'checkin');
+  assert.match(mine.why, /\{K\} has been told/, 'the person travelling sees that it has gone out');
+  const early = world(abs(0, hm(18, 40)));
+  early.checkins = w.checkins;
+  assert.ok(!kinds(early, 'K').includes('checkin'), 'before the time, the chosen person hears nothing');
+  assert.match(brief(early, 'A1').cards.find((c) => c.kind === 'checkin').why, /only if you are overdue/);
+});
+
+test('home: a watch stays silent unless the thing is still open at its time', () => {
+  const w = world(abs(0, hm(13, 16)));
+  w.watches = [startWatch({ by: 'A1', cid: 'pickup-0', at: abs(0, hm(13, 15)), now: abs(0, hm(12, 40)) })];
+  const card = brief(w, 'A1').cards.find((c) => c.kind === 'watch');
+  assert.match(card.why, /You asked to be told at 1:15pm/);
+  assert.deepEqual(card.actions.map((a) => a.label), ['Dismiss'], 'a child is not offered the pickup itself');
+  w.watches = [startWatch({ by: 'H', cid: 'pickup-0', at: abs(0, hm(13, 15)), now: abs(0, hm(12, 40)) })];
+  const h = brief(w, 'H').cards;
+  assert.equal(h.filter((c) => c.id === 'ack-pickup-0').length, 1, 'one card, not two, for the same pickup');
+  assert.match(h[0].why, /You asked to be told at 1:15pm/);
+  w.commitments.find((c) => c.id === 'pickup-0').ack = 'acked';
+  assert.ok(!brief(w, 'H').cards.some((c) => /pickup-0/.test(c.id)), 'confirmed, so nothing is shown');
+});
+
+test('ask: watches, the scam check, the calendar file, arriving and the next stop', () => {
+  const say = (text, v = 'H', w = world()) => ask(text, w, v);
+  const watch = say('remind me at 1:15pm if nobody has confirmed the pickup');
+  assert.deepEqual(watch.do, { type: 'watch', cid: 'pickup-0', at: abs(0, hm(13, 15)) });
+  assert.match(watch.text, /If someone confirms first, you will hear nothing/);
+  assert.match(say('remind me at 11am if nobody has confirmed').text, /already passed/);
+  const scam = say('Is this a scam: Hi Mum this is my new number, please transfer $500 now, urgent');
+  assert.equal(scam.kind, 'answer');
+  assert.match(scam.text, /looks like a scam/);
+  assert.ok(scam.bullets.some((b) => /1799/.test(b)));
+  assert.match(scam.note, /not an AI/);
+  assert.deepEqual(say('is this a scam?').do, { type: 'go', route: 'safety' });
+  assert.deepEqual(say('add my week to my calendar').do, { type: 'ics' });
+  assert.equal(say('I am home').kind, 'answer', 'with no check in running, it says so');
+  const w = world();
+  w.checkins = [startCheckin({ by: 'A1', to: 'K', label: 'Football to home', now: w.now, due: abs(0, hm(19)) })];
+  assert.equal(say('I am home', 'A1', w).do.type, 'arrive');
+  assert.match(say('what is the next stop on the quest').text, /Stall four \(sample\), Toa Payoh\. Saturday from 5:30pm is free for everyone/);
+  assert.deepEqual(say('open safety').do, { type: 'go', route: 'safety' });
 });
