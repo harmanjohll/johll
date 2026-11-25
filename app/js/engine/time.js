@@ -42,3 +42,20 @@ export function fmtDuration(min) {
 }
 
 export const overlaps = (a, b) => a.from < b.to && b.from < a.to;
+
+// Real dates for the sample week, which begins on Monday 23 November 2026.
+// Singapore is eight hours ahead of UTC all year, with no daylight saving.
+export const WEEK_START_UTC = Date.UTC(2026, 10, 23);
+export const SGT_OFFSET_MIN = 480;
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// A day number can run past the sample week: day 12 is Saturday 5 December.
+export function dateOfDay(day) {
+  return new Date(WEEK_START_UTC + day * 86400000);
+}
+
+export function fmtDayDate(day) {
+  const d = dateOfDay(day);
+  return `${WEEKDAYS_SHORT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]}${d.getUTCFullYear() === 2026 ? '' : ` ${d.getUTCFullYear()}`}`;
+}
